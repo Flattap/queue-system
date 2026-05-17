@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Запись на консультацию — Метлин</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #0d0d0d;
+  --gold: #b8935a;
+  --gold-light: #d4b483;
+  --cream: #faf7f2;
+  --muted: #8a8278;
+  --line: rgba(184,147,90,0.25);
+  --green: #2a9d60;
+  --red: #c0392b;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Montserrat', sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 10% 20%, rgba(184,147,90,0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 90% 80%, rgba(184,147,90,0.05) 0%, transparent 60%);
+  pointer-events: none; z-index: 0;
+}
+
+/* ════ BANNER ════ */
+#gameBanner {
+  display: none; position: relative; z-index: 10; width: 100%; overflow: hidden;
+}
+#gameBanner.state-waiting { background: linear-gradient(135deg,#1a1a2e,#16213e,#0f3460); }
+#gameBanner.state-open    { background: linear-gradient(135deg,#0d2b0d,#1a4a1a,#0d3b0d); }
+#gameBanner.state-live    { background: linear-gradient(135deg,#2b0d0d,#4a1a1a,#3b0d0d); animation: livePulse 3s ease-in-out infinite; }
+#gameBanner.state-ended   { background: linear-gradient(135deg,#1a1a1a,#2a2a2a); }
+@keyframes livePulse { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.08)} }
+
+.banner-inner {
+  max-width: 1100px; margin: 0 auto; padding: 28px 40px;
+  display: flex; align-items: center; justify-content: space-between; gap: 32px; flex-wrap: wrap;
+}
+.banner-label  { font-size:9px; letter-spacing:0.4em; text-transform:uppercase; color:rgba(255,255,255,0.45); font-weight:600; margin-bottom:6px; }
+.banner-status { font-family:'Cormorant Garamond',serif; font-size:clamp(20px,3vw,28px); font-weight:300; color:white; line-height:1.2; }
+.banner-clock  { display:flex; align-items:flex-start; gap:6px; }
+.clock-seg     { display:flex; flex-direction:column; align-items:center; }
+.clock-num     { font-family:'Cormorant Garamond',serif; font-size:clamp(44px,7vw,80px); font-weight:300; line-height:1; color:white; min-width:2ch; text-align:center; text-shadow:0 0 40px rgba(255,255,255,0.15); transition:color 0.3s; }
+.clock-unit    { font-size:8px; letter-spacing:0.25em; text-transform:uppercase; color:rgba(255,255,255,0.4); margin-top:4px; }
+.clock-colon   { font-family:'Cormorant Garamond',serif; font-size:clamp(36px,6vw,64px); font-weight:300; color:rgba(255,255,255,0.3); line-height:1; padding-top:4px; animation:blink 1s step-end infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+.state-waiting .clock-num { color:#7eb8f7; }
+.state-open    .clock-num { color:#6df07a; }
+.state-live    .clock-num { color:#f87878; }
+.state-ended   .clock-num { color:rgba(255,255,255,0.3); }
+.live-dot { display:none; width:10px; height:10px; border-radius:50%; background:#f87878; box-shadow:0 0 12px 3px rgba(248,120,120,0.6); animation:dotPulse 1.4s ease-in-out infinite; flex-shrink:0; margin-top:4px; }
+.state-live .live-dot { display:block; }
+@keyframes dotPulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.5);opacity:0.6} }
+
+/* ════ HEADER ════ */
+header { position:relative; z-index:1; padding:60px 40px 40px; text-align:center; border-bottom:1px solid var(--line); animation:fadeUp 0.7s ease both; }
+.header-rule { display:flex; align-items:center; justify-content:center; gap:20px; margin-bottom:32px; }
+.header-rule span { flex:1; max-width:120px; height:1px; background:var(--gold); }
+.header-rule em { font-style:normal; font-family:'Cormorant Garamond',serif; font-size:13px; letter-spacing:0.3em; color:var(--gold); text-transform:uppercase; }
+.site-title { font-family:'Cormorant Garamond',serif; font-size:clamp(52px,8vw,96px); font-weight:300; letter-spacing:-0.02em; line-height:1; color:var(--ink); margin-bottom:16px; }
+.site-title strong { font-weight:600; color:var(--gold); }
+.site-sub { font-size:12px; letter-spacing:0.25em; color:var(--muted); text-transform:uppercase; font-weight:400; }
+
+/* ════ MAIN ════ */
+main { position:relative; z-index:1; max-width:1100px; margin:0 auto; padding:80px 40px; display:grid; grid-template-columns:1fr 1fr; gap:80px; align-items:start; animation:fadeUp 0.7s 0.15s ease both; }
+.info-block { padding-top:8px; }
+.section-label { font-size:10px; letter-spacing:0.35em; color:var(--gold); text-transform:uppercase; font-weight:600; margin-bottom:24px; display:flex; align-items:center; gap:12px; }
+.section-label::after { content:''; flex:1; height:1px; background:linear-gradient(to right,var(--gold-light),transparent); }
+.info-heading { font-family:'Cormorant Garamond',serif; font-size:clamp(32px,4vw,48px); font-weight:400; line-height:1.2; margin-bottom:24px; color:var(--ink); }
+.info-body { font-size:14px; line-height:1.9; color:var(--muted); font-weight:300; margin-bottom:40px; }
+.features { list-style:none; display:flex; flex-direction:column; gap:16px; }
+.features li { display:flex; align-items:flex-start; gap:14px; font-size:13px; color:var(--ink); font-weight:400; }
+.features li::before { content:'◆'; color:var(--gold); font-size:8px; margin-top:5px; flex-shrink:0; }
+
+/* ════ FORM CARD ════ */
+.form-card { background:white; border:1px solid var(--line); border-radius:2px; padding:48px 40px; position:relative; box-shadow:0 20px 60px rgba(13,13,13,0.06),0 4px 16px rgba(13,13,13,0.04); }
+.form-card::before { content:''; position:absolute; top:0; left:40px; right:40px; height:2px; background:linear-gradient(to right,transparent,var(--gold),transparent); }
+.form-title { font-family:'Cormorant Garamond',serif; font-size:28px; font-weight:500; margin-bottom:8px; color:var(--ink); }
+.form-hint  { font-size:12px; color:var(--muted); margin-bottom:36px; letter-spacing:0.02em; }
+
+.form-locked-overlay { display:none; position:absolute; inset:0; border-radius:2px; background:rgba(250,247,242,0.93); z-index:5; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:40px; backdrop-filter:blur(3px); }
+.form-locked-overlay.active { display:flex; }
+.lock-icon { font-size:40px; margin-bottom:16px; opacity:0.4; }
+.lock-msg  { font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:400; color:var(--muted); margin-bottom:8px; }
+.lock-sub  { font-size:11px; color:var(--muted); letter-spacing:0.1em; line-height:1.7; }
+
+.field { margin-bottom:24px; }
+.field label { display:block; font-size:10px; letter-spacing:0.2em; text-transform:uppercase; font-weight:600; color:var(--muted); margin-bottom:10px; }
+.field input,.field select,.field textarea { width:100%; font-family:'Montserrat',sans-serif; font-size:14px; font-weight:400; color:var(--ink); background:var(--cream); border:1px solid var(--line); border-radius:2px; padding:14px 16px; outline:none; transition:border-color 0.2s,box-shadow 0.2s; appearance:none; }
+.field input:focus,.field select:focus,.field textarea:focus { border-color:var(--gold); box-shadow:0 0 0 3px rgba(184,147,90,0.1); }
+.field textarea { resize:vertical; min-height:80px; }
+.field-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+
+
+
+.btn-submit { width:100%; background:var(--ink); color:white; border:none; cursor:pointer; font-family:'Montserrat',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.25em; text-transform:uppercase; padding:18px 24px; border-radius:2px; margin-top:8px; position:relative; overflow:hidden; transition:background 0.25s,transform 0.15s; }
+.btn-submit::after { content:''; position:absolute; inset:0; background:var(--gold); transform:translateX(-100%); transition:transform 0.35s ease; z-index:0; }
+.btn-submit:hover::after { transform:translateX(0); }
+.btn-submit span { position:relative; z-index:1; }
+.btn-submit:hover { transform:translateY(-1px); }
+.btn-submit:active { transform:translateY(0); }
+
+.success-msg { display:none; text-align:center; padding:32px 0 16px; }
+.success-msg .check { width:56px; height:56px; border-radius:50%; border:2px solid var(--gold); display:flex; align-items:center; justify-content:center; margin:0 auto 20px; font-size:22px; color:var(--gold); }
+.success-msg h3 { font-family:'Cormorant Garamond',serif; font-size:24px; font-weight:500; margin-bottom:8px; }
+.success-msg p { font-size:13px; color:var(--muted); }
+.btn-again { margin-top:20px; background:none; border:1px solid var(--line); font-family:'Montserrat',sans-serif; font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); padding:12px 24px; cursor:pointer; border-radius:2px; transition:border-color 0.2s,color 0.2s; }
+.btn-again:hover { border-color:var(--gold); color:var(--gold); }
+
+/* ════ MY ENTRIES ════ */
+.my-entries-wrap { position:relative; z-index:1; max-width:1100px; margin:0 auto; padding:0 40px 56px; animation:fadeUp 0.7s 0.25s ease both; }
+
+.my-entry-card { background:white; border:1px solid var(--line); border-radius:2px; padding:22px 28px; margin-bottom:12px; display:flex; align-items:center; gap:20px; flex-wrap:wrap; box-shadow:0 4px 20px rgba(13,13,13,0.04); position:relative; overflow:hidden; transition:box-shadow 0.2s; }
+.my-entry-card:hover { box-shadow:0 8px 32px rgba(13,13,13,0.08); }
+.my-entry-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; }
+.my-entry-card.s-new::before      { background:var(--gold); }
+.my-entry-card.s-accepted::before { background:var(--green); }
+.my-entry-card.s-done::before     { background:#ccc; }
+
+.my-entry-info { flex:1; min-width:180px; }
+.my-entry-name { font-size:15px; font-weight:600; margin-bottom:5px; }
+.my-entry-meta { font-size:12px; color:var(--muted); line-height:1.7; }
+
+.my-entry-badge { display:inline-block; font-size:10px; letter-spacing:0.1em; padding:4px 12px; border-radius:20px; font-weight:600; flex-shrink:0; }
+.badge-rk    { background:rgba(192,57,43,0.1);  color:#c0392b; }
+.badge-micro { background:rgba(37,99,176,0.1);  color:#2563b0; }
+.badge-dz    { background:rgba(40,167,90,0.1);  color:#1a7a45; }
+.badge-laba  { background:rgba(107,63,160,0.1); color:#6b3fa0; }
+
+.my-entry-status-lbl { font-size:10px; letter-spacing:0.15em; text-transform:uppercase; font-weight:600; flex-shrink:0; }
+.sl-new      { color:var(--gold); }
+.sl-accepted { color:var(--green); }
+.sl-done     { color:#bbb; }
+
+.btn-mark-done { background:rgba(42,157,96,0.08); color:var(--green); border:1px solid rgba(42,157,96,0.28); border-radius:2px; font-family:'Montserrat',sans-serif; font-size:10px; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; padding:10px 18px; cursor:pointer; flex-shrink:0; transition:all 0.2s; white-space:nowrap; }
+.btn-mark-done:hover { background:rgba(42,157,96,0.16); border-color:var(--green); }
+
+.my-empty { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:20px; color:#ccc; text-align:center; padding:28px 0; }
+
+/* ════ QUEUE ════ */
+.queue-wrap { position:relative; z-index:1; max-width:1100px; margin:0 auto; padding:0 40px 80px; animation:fadeUp 0.7s 0.35s ease both; }
+.counter-strip { display:flex; align-items:center; gap:10px; margin-bottom:16px; font-size:11px; color:var(--muted); letter-spacing:0.1em; }
+.counter-strip strong { font-family:'Cormorant Garamond',serif; font-size:28px; font-weight:300; color:var(--gold); line-height:1; }
+
+.entries-table { width:100%; border-collapse:collapse; font-size:13px; }
+.entries-table th { text-align:left; font-size:9px; letter-spacing:0.25em; text-transform:uppercase; color:var(--muted); font-weight:600; padding:10px 14px; border-bottom:1px solid var(--line); }
+.entries-table td { padding:12px 14px; border-bottom:1px solid rgba(184,147,90,0.08); color:var(--ink); vertical-align:top; }
+.entries-table tr:hover td { background:rgba(184,147,90,0.03); }
+.tag { display:inline-block; font-size:10px; letter-spacing:0.1em; padding:3px 10px; border-radius:20px; font-weight:500; }
+.tag-new      { background:rgba(184,147,90,0.12); color:var(--gold); }
+.tag-accepted { background:rgba(42,157,96,0.1);   color:var(--green); }
+.tag-done-lbl { background:rgba(180,180,180,0.12); color:#aaa; }
+
+.empty-state { text-align:center; padding:48px 20px; color:var(--muted); font-size:13px; }
+.empty-state em { display:block; font-family:'Cormorant Garamond',serif; font-style:italic; font-size:28px; color:var(--line); margin-bottom:10px; }
+
+footer { position:relative; z-index:1; border-top:1px solid var(--line); padding:28px 40px; text-align:center; font-size:11px; color:var(--muted); letter-spacing:0.15em; }
+
+@media(max-width:768px) {
+  main { grid-template-columns:1fr; gap:48px; padding:48px 24px; }
+  .form-card { padding:32px 24px; }
+  .field-row { grid-template-columns:1fr; }
+  header { padding:40px 24px 32px; }
+  .my-entries-wrap,.queue-wrap { padding-left:24px; padding-right:24px; }
+  .banner-inner { padding:20px 24px; }
+}
+@keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+</style>
+</head>
+<body>
+
+<!-- ════ BANNER ════ -->
+<div id="gameBanner">
+  <div class="banner-inner">
+    <div>
+      <div class="banner-label" id="bannerLabel">Статус</div>
+      <div class="banner-status" id="bannerStatus">—</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <div class="live-dot"></div>
+      <div class="banner-clock">
+        <div class="clock-seg"><div class="clock-num" id="clkH">00</div><div class="clock-unit">часов</div></div>
+        <div class="clock-colon">:</div>
+        <div class="clock-seg"><div class="clock-num" id="clkM">00</div><div class="clock-unit">минут</div></div>
+        <div class="clock-colon">:</div>
+        <div class="clock-seg"><div class="clock-num" id="clkS">00</div><div class="clock-unit">секунд</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ HEADER ════ -->
+<header>
+  <div class="header-rule"><span></span><em>Личная практика</em><span></span></div>
+  <h1 class="site-title">Метлин<br><strong>Консультации</strong></h1>
+  <p class="site-sub">Запись на индивидуальный приём</p>
+</header>
+
+<!-- ════ MAIN ════ -->
+<main>
+  <div class="info-block">
+    <p class="section-label">О консультации</p>
+    <h2 class="info-heading">Индивидуальная<br>работа с экспертом</h2>
+    <p class="info-body">Запись открывается за час до начала консультации. Займите место в очереди и ожидайте своей очереди.</p>
+    <ul class="features">
+      <li>Запись открывается за 1 час до старта автоматически</li>
+      <li>Приоритет: РК → Микротест/ДЗ (чередуются) → Лабы</li>
+      <li>После сдачи задания отметьте себя в «Мои записи»</li>
+      <li>Пока активная запись не закрыта, новую подать нельзя</li>
+    </ul>
+  </div>
+
+  <div class="form-card">
+    <div class="form-locked-overlay" id="lockedOverlay">
+      <div class="lock-icon">🔒</div>
+      <div class="lock-msg" id="lockMsg">Запись ещё не открыта</div>
+      <div class="lock-sub" id="lockSub">Откроется за час до начала консультации</div>
+    </div>
+
+    <div id="formWrap">
+      <h3 class="form-title">Оставить заявку</h3>
+      <p class="form-hint">Заполните поля ниже — это займёт меньше минуты</p>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Имя *</label>
+          <input type="text" id="fFirstName" placeholder="Иван" autocomplete="given-name">
+        </div>
+        <div class="field">
+          <label>Фамилия *</label>
+          <input type="text" id="fLastName" placeholder="Петров" autocomplete="family-name">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Группа *</label>
+        <input type="text" id="fGroup" placeholder="например, ИУ5-21Б">
+      </div>
+      <div class="field">
+        <label>Удобный день</label>
+        <select id="fDay">
+          <option value="">— выберите день —</option>
+          <option value="Пятница">Пятница</option>
+          <option value="Суббота">Суббота</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Тип задания *</label>
+        <select id="fTaskType">
+          <option value="">— выберите тип —</option>
+          <option value="РК">РК (рубежный контроль)</option>
+          <option value="Микротест">Микротест</option>
+          <option value="ДЗ">ДЗ (домашнее задание)</option>
+          <option value="Лаба">Лаба</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Комментарий</label>
+        <textarea id="fComment" placeholder="Уточните номер задания, тему или другие детали..."></textarea>
+      </div>
+      <button class="btn-submit" onclick="submitForm()"><span>Записаться на консультацию →</span></button>
+    </div>
+
+    <div class="success-msg" id="successMsg">
+      <div class="check">✓</div>
+      <h3>Заявка принята</h3>
+      <p>Вы в очереди. Ожидайте своей очереди.<br>Когда сдадите — отметьте себя ниже.</p>
+      <br>
+      <button class="btn-again" onclick="resetForm()">Подать ещё одну заявку</button>
+    </div>
+  </div>
+</main>
+
+<!-- ════ MY ENTRIES ════ -->
+<div class="my-entries-wrap">
+  <div class="section-label">Мои записи</div>
+  <div id="myEntriesContainer">
+    <div class="my-empty">У вас пока нет записей</div>
+  </div>
+</div>
+
+<!-- ════ QUEUE ════ -->
+<div class="queue-wrap">
+  <div class="section-label">Очередь</div>
+  <div class="counter-strip">
+    <strong id="counterNum">0</strong>
+    <span>человек в очереди</span>
+  </div>
+  <div id="tableContainer">
+    <div class="empty-state"><em>нет заявок</em>Заявки появятся здесь после заполнения формы</div>
+  </div>
+</div>
+
+<footer>Метлин · Консультации · Данные хранятся локально в вашем браузере</footer>
+
+<script>
+const KEY         = 'metlin_applications';
+const SESSION_KEY = 'metlin_session';
+const MY_IDS_KEY  = 'metlin_my_ids';
+
+function loadData()    { try { return JSON.parse(localStorage.getItem(KEY))         || []; } catch { return []; } }
+function saveData(d)   { localStorage.setItem(KEY, JSON.stringify(d)); }
+function loadSession() { try { return JSON.parse(localStorage.getItem(SESSION_KEY)) || null; } catch { return null; } }
+function loadMyIds()   { try { return JSON.parse(localStorage.getItem(MY_IDS_KEY))  || []; } catch { return []; } }
+function saveMyIds(a)  { localStorage.setItem(MY_IDS_KEY, JSON.stringify(a)); }
+
+/* ── Priority ── */
+function getMicroDzTurn()  { return parseInt(localStorage.getItem('metlin_micro_dz_turn') || '0'); }
+function flipMicroDzTurn() { localStorage.setItem('metlin_micro_dz_turn', getMicroDzTurn() === 0 ? 1 : 0); }
+function getEffectivePriority(t) {
+  if (t === 'РК')   return 0;
+  if (t === 'Лаба') return 3;
+  const turn = getMicroDzTurn();
+  if (t === 'Микротест') return turn === 0 ? 1 : 2;
+  if (t === 'ДЗ')        return turn === 0 ? 2 : 1;
+  return 4;
+}
+
+/* ── Session state ── */
+function getSessionState(s) {
+  if (!s || !s.startTs) return null;
+  const now = Date.now(), start = s.startTs, end = start + s.durationMs, open = start - 3600000;
+  if (now < open)  return 'waiting';
+  if (now < start) return 'open';
+  if (now < end)   return 'live';
+  return 'ended';
+}
+
+/* ── Banner ── */
+function updateBanner() {
+  const session = loadSession();
+  const banner  = document.getElementById('gameBanner');
+  const state   = getSessionState(session);
+
+  if (!state) {
+    banner.style.display = 'none';
+    setFormLocked(true, 'Консультация не назначена', 'Ожидайте объявления от преподавателя');
+    return;
+  }
+
+  banner.style.display = 'block';
+  banner.className = 'state-' + state;
+
+  const now = Date.now(), start = session.startTs, end = start + session.durationMs, open = start - 3600000;
+  let remaining = 0, lbl = '', status = '';
+
+  if (state === 'waiting') {
+    remaining = open - now; lbl = 'До открытия записи'; status = 'Запись скоро откроется';
+    setFormLocked(true, 'Запись ещё закрыта', 'Откроется за час до начала консультации');
+  } else if (state === 'open') {
+    remaining = start - now; lbl = 'Игра начнётся через'; status = '🎮 Запись открыта — подайте заявку!';
+    setFormLocked(false);
+  } else if (state === 'live') {
+    remaining = end - now; lbl = 'Игра идёт — осталось'; status = '🔴 Игра идёт';
+    setFormLocked(false);
+  } else {
+    remaining = 0; lbl = 'Завершено'; status = 'Консультация завершена';
+    setFormLocked(true, 'Консультация завершена', 'Запись закрыта');
+  }
+
+  document.getElementById('bannerLabel').textContent  = lbl;
+  document.getElementById('bannerStatus').textContent = status;
+  const t = Math.max(0, Math.floor(remaining / 1000));
+  document.getElementById('clkH').textContent = String(Math.floor(t / 3600)).padStart(2,'0');
+  document.getElementById('clkM').textContent = String(Math.floor((t % 3600) / 60)).padStart(2,'0');
+  document.getElementById('clkS').textContent = String(t % 60).padStart(2,'0');
+}
+
+function setFormLocked(locked, msg, sub) {
+  const ov = document.getElementById('lockedOverlay');
+  if (locked) {
+    ov.classList.add('active');
+    if (msg) document.getElementById('lockMsg').textContent = msg;
+    if (sub) document.getElementById('lockSub').textContent = sub;
+  } else {
+    ov.classList.remove('active');
+  }
+}
+
+/* ── Device lock: one active entry per device ── */
+function getMyActiveEntry() {
+  const myIds = loadMyIds();
+  if (!myIds.length) return null;
+  return loadData().find(e => myIds.includes(e.id) && e.status !== 'Сдано') || null;
+}
+
+/* ── Submit ── */
+function submitForm() {
+  const session = loadSession();
+  const state   = getSessionState(session);
+  if (state !== 'open' && state !== 'live') { alert('Запись сейчас закрыта.'); return; }
+
+  const firstName = document.getElementById('fFirstName').value.trim();
+  const lastName  = document.getElementById('fLastName').value.trim();
+  const group     = document.getElementById('fGroup').value.trim();
+  const day       = document.getElementById('fDay').value;
+  const taskType  = document.getElementById('fTaskType').value;
+  const comment   = document.getElementById('fComment').value.trim();
+
+  if (!firstName) { alert('Введите имя.'); return; }
+  if (!lastName)  { alert('Введите фамилию.'); return; }
+  if (!group)     { alert('Укажите группу.'); return; }
+  if (!taskType)  { alert('Выберите тип задания.'); return; }
+
+  const activeEntry = getMyActiveEntry();
+  if (activeEntry) {
+    alert(`С этого устройства уже есть активная запись (${activeEntry.lastName} ${activeEntry.firstName}, ${activeEntry.taskType}).\n\nОтметьте её как «Сдано» в разделе «Мои записи» — и сможете записаться снова.`);
+    return;
+  }
+
+  const priority = getEffectivePriority(taskType);
+  if (taskType === 'Микротест' || taskType === 'ДЗ') flipMicroDzTurn();
+
+  const entry = {
+    id: Date.now(),
+    createdAt: new Date().toLocaleString('ru-RU'),
+    firstName, lastName, group,
+    day: day || '—', taskType, priority,
+    comment: comment || '—', status: 'Новая'
+  };
+
+  const data = loadData();
+  data.unshift(entry);
+  saveData(data);
+
+  const myIds = loadMyIds();
+  myIds.push(entry.id);
+  saveMyIds(myIds);
+
+  document.getElementById('formWrap').style.display  = 'none';
+  document.getElementById('successMsg').style.display = 'block';
+  renderAll();
+}
+
+function resetForm() {
+  ['fFirstName','fLastName','fGroup','fComment'].forEach(id => document.getElementById(id).value = '');
+  ['fDay','fTaskType'].forEach(id => document.getElementById(id).selectedIndex = 0);
+  document.getElementById('formWrap').style.display  = 'block';
+  document.getElementById('successMsg').style.display = 'none';
+}
+
+/* ── Mark done ── */
+function markDone(id) {
+  if (!confirm('Отметить запись как «Сдано»?\nПосле этого вы сможете записаться снова.')) return;
+  saveData(loadData().map(e => e.id === id ? {...e, status:'Сдано'} : e));
+  renderAll();
+}
+
+/* ── My entries ── */
+const BADGE_CLASS = { 'РК':'badge-rk', 'Микротест':'badge-micro', 'ДЗ':'badge-dz', 'Лаба':'badge-laba' };
+
+function renderMyEntries() {
+  const myIds = loadMyIds();
+  const all   = loadData();
+  const mine  = all.filter(e => myIds.includes(e.id));
+  const c     = document.getElementById('myEntriesContainer');
+
+  if (!mine.length) {
+    c.innerHTML = '<div class="my-empty">У вас пока нет записей</div>';
+    return;
+  }
+
+  mine.sort((a,b) => {
+    const ad = a.status === 'Сдано' ? 1 : 0, bd = b.status === 'Сдано' ? 1 : 0;
+    return ad - bd || b.id - a.id;
+  });
+
+  c.innerHTML = mine.map(e => {
+    const isDone     = e.status === 'Сдано';
+    const isAccepted = e.status === 'Принято';
+    const cardCls  = isDone ? 's-done' : isAccepted ? 's-accepted' : 's-new';
+    const statusCls = isDone ? 'sl-done' : isAccepted ? 'sl-accepted' : 'sl-new';
+    const statusTxt = isDone ? 'Сдано ✓' : isAccepted ? 'Принято ✓' : 'В очереди';
+    return `
+    <div class="my-entry-card ${cardCls}">
+      <div class="my-entry-info">
+        <div class="my-entry-name">${e.lastName} ${e.firstName}</div>
+        <div class="my-entry-meta">
+          ${e.group} · ${e.day}
+          ${e.comment !== '—' ? ` · ${e.comment}` : ''}
+          <br><span style="font-size:11px">${e.createdAt}</span>
+        </div>
+      </div>
+      <span class="my-entry-badge ${BADGE_CLASS[e.taskType] || ''}">${e.taskType}</span>
+      <span class="my-entry-status-lbl ${statusCls}">${statusTxt}</span>
+      ${!isDone ? `<button class="btn-mark-done" onclick="markDone(${e.id})">Отметить как сдано ✓</button>` : ''}
+    </div>`;
+  }).join('');
+}
+
+/* ── Queue table ── */
+const TASK_COLORS = {
+  'РК':        { bg:'rgba(220,50,50,0.1)',  color:'#c0392b' },
+  'Микротест': { bg:'rgba(52,120,220,0.1)', color:'#2563b0' },
+  'ДЗ':        { bg:'rgba(40,167,90,0.1)',  color:'#1a7a45' },
+  'Лаба':      { bg:'rgba(120,80,200,0.1)', color:'#6b3fa0' },
+};
+
+function renderQueue() {
+  const raw  = loadData();
+  const data = [...raw].sort((a,b) => a.priority !== b.priority ? a.priority - b.priority : a.id - b.id);
+  const c    = document.getElementById('tableContainer');
+
+  document.getElementById('counterNum').textContent = data.filter(e => e.status !== 'Сдано').length;
+
+  if (!data.length) {
+    c.innerHTML = '<div class="empty-state"><em>нет заявок</em>Заявки появятся здесь после заполнения формы</div>';
+    return;
+  }
+
+  let qPos = 0;
+  const rows = data.map(e => {
+    const isDone     = e.status === 'Сдано';
+    const isAccepted = e.status === 'Принято';
+    const tc    = TASK_COLORS[e.taskType] || {bg:'rgba(180,180,180,0.12)',color:'#555'};
+    const pos   = isDone ? '—' : ++qPos;
+    const stTag = isDone
+      ? `<span class="tag tag-done-lbl">Сдано</span>`
+      : isAccepted
+        ? `<span class="tag tag-accepted">Принято</span>`
+        : `<span class="tag tag-new">Ожидает</span>`;
+    return `<tr style="${isDone ? 'opacity:0.4' : ''}">
+      <td style="color:var(--muted);font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:300;text-align:center">${pos}</td>
+      <td style="font-size:11px;color:var(--muted)">${e.createdAt}</td>
+      <td><strong>${e.lastName} ${e.firstName}</strong></td>
+      <td>${e.group}</td>
+      <td>${e.day}</td>
+      <td><span class="tag" style="background:${tc.bg};color:${tc.color}">${e.taskType}</span></td>
+      <td>${stTag}</td>
+    </tr>`;
+  }).join('');
+
+  c.innerHTML = `<table class="entries-table"><thead><tr>
+    <th>#</th><th>Время подачи</th><th>Фамилия Имя</th>
+    <th>Группа</th><th>День</th><th>Тип</th><th>Статус</th>
+  </tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function renderAll() {
+  renderMyEntries();
+  renderQueue();
+  updateDeviceLockOverlay();
+}
+
+function updateDeviceLockOverlay() {
+  // Only show device-lock if form is not already session-locked
+  const ov = document.getElementById('lockedOverlay');
+  if (ov.classList.contains('active')) return; // session lock takes priority
+  const active = getMyActiveEntry();
+  if (active) {
+    ov.classList.add('active');
+    document.getElementById('lockMsg').textContent = 'У вас уже есть активная запись';
+    document.getElementById('lockSub').textContent =
+      `${active.lastName} ${active.firstName} · ${active.taskType} · статус: ${active.status}\nОтметьте её как «Сдано» в разделе «Мои записи» — и сможете записаться снова.`;
+  }
+  // If no active entry and session is open, unlock is handled by updateBanner
+}
+
+/* ── Storage events ── */
+window.addEventListener('storage', e => {
+  if (e.key === SESSION_KEY) updateBanner();
+  if (e.key === KEY)         renderAll();
+});
+
+/* ── Init ── */
+document.addEventListener('DOMContentLoaded', () => {
+  renderAll();
+  updateBanner();
+  setInterval(updateBanner, 1000);
+  setInterval(renderAll, 5000);
+});
+</script>
+</body>
+</html>
