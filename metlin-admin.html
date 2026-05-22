@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Админ — Метлин</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root {
   --ink:#0d0d0d; --gold:#b8935a; --gold-light:#d4b483; --cream:#faf7f2; --muted:#8a8278; --line:rgba(184,147,90,0.25);
@@ -24,15 +23,15 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .pw-title{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:300;color:white;margin-bottom:8px;line-height:1.1;}
 .pw-sub{font-size:11px;letter-spacing:0.15em;color:var(--admin-muted);margin-bottom:40px;}
 .pw-field{position:relative;margin-bottom:16px;}
-.pw-field input{width:100%;font-family:'Montserrat',sans-serif;font-size:16px;font-weight:400;color:white;letter-spacing:0.1em;background:rgba(255,255,255,0.05);border:1px solid var(--admin-border);border-radius:2px;padding:16px 48px 16px 18px;outline:none;text-align:center;transition:border-color 0.2s,box-shadow 0.2s;}
+.pw-field input{width:100%;font-family:'Montserrat',sans-serif;font-size:16px;color:white;letter-spacing:0.1em;background:rgba(255,255,255,0.05);border:1px solid var(--admin-border);border-radius:2px;padding:16px 48px 16px 18px;outline:none;text-align:center;transition:border-color 0.2s,box-shadow 0.2s;}
 .pw-field input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,147,90,0.12);}
 .pw-toggle{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--admin-muted);font-size:16px;padding:4px;transition:color 0.2s;}
 .pw-toggle:hover{color:var(--gold);}
-.pw-error{display:none;font-size:11px;color:#f07070;letter-spacing:0.1em;margin-bottom:16px;min-height:16px;}
+.pw-error{display:none;font-size:11px;color:#f07070;letter-spacing:0.1em;margin-bottom:16px;}
 .pw-error.visible{display:block;}
 .pw-btn{width:100%;background:var(--gold);color:white;border:none;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.25em;text-transform:uppercase;padding:16px 24px;border-radius:2px;transition:background 0.2s,transform 0.15s;margin-bottom:24px;}
 .pw-btn:hover{background:var(--gold-light);transform:translateY(-1px);}
-.pw-remember{display:flex;align-items:center;justify-content:center;gap:10px;font-size:11px;color:var(--admin-muted);letter-spacing:0.08em;cursor:pointer;user-select:none;}
+.pw-remember{display:flex;align-items:center;justify-content:center;gap:10px;font-size:11px;color:var(--admin-muted);cursor:pointer;user-select:none;}
 .pw-remember input[type=checkbox]{width:14px;height:14px;accent-color:var(--gold);cursor:pointer;}
 .pw-footer{margin-top:32px;font-size:10px;color:rgba(255,255,255,0.15);letter-spacing:0.1em;}
 @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
@@ -46,9 +45,9 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .topbar-time{font-size:11px;letter-spacing:0.15em;color:var(--admin-muted);}
 
 /* PAGE */
-.page{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:48px 48px 80px;display:grid;grid-template-columns:400px 1fr;gap:40px;align-items:start;}
+.page{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:48px 48px 80px;display:grid;grid-template-columns:380px 1fr;gap:40px;align-items:start;}
 .card{background:var(--admin-card);border:1px solid var(--admin-border);border-radius:4px;overflow:hidden;}
-.card-header{padding:24px 32px;border-bottom:1px solid var(--admin-border);display:flex;align-items:center;justify-content:space-between;}
+.card-header{padding:24px 32px;border-bottom:1px solid var(--admin-border);}
 .card-title{font-size:10px;letter-spacing:0.3em;text-transform:uppercase;color:var(--gold);font-weight:600;}
 .card-body{padding:32px;}
 
@@ -63,27 +62,24 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .status-clock{font-family:'Cormorant Garamond',serif;font-size:48px;font-weight:300;color:white;letter-spacing:0.05em;margin-top:8px;}
 #adminClockLabel{font-size:10px;letter-spacing:0.2em;color:var(--admin-muted);margin-top:4px;}
 
-/* FORM FIELDS */
+/* FIELDS */
 .afield{margin-bottom:24px;}
 .afield label{display:block;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;font-weight:600;color:var(--admin-muted);margin-bottom:10px;}
-.afield input,.afield select{width:100%;font-family:'Montserrat',sans-serif;font-size:14px;font-weight:400;color:white;background:rgba(255,255,255,0.05);border:1px solid var(--admin-border);border-radius:2px;padding:14px 16px;outline:none;transition:border-color 0.2s,box-shadow 0.2s;appearance:none;}
-.afield input:focus,.afield select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,147,90,0.12);}
+.afield input{width:100%;font-family:'Montserrat',sans-serif;font-size:14px;color:white;background:rgba(255,255,255,0.05);border:1px solid var(--admin-border);border-radius:2px;padding:14px 16px;outline:none;transition:border-color 0.2s,box-shadow 0.2s;appearance:none;}
+.afield input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,147,90,0.12);}
 .afield input[type="datetime-local"]::-webkit-calendar-picker-indicator{filter:invert(0.6);}
 .hint-text{font-size:11px;color:var(--admin-muted);margin-top:6px;line-height:1.5;}
-.afield-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
 
 /* BUTTONS */
 .btn-primary{width:100%;background:var(--gold);color:white;border:none;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.25em;text-transform:uppercase;padding:16px 24px;border-radius:2px;margin-top:4px;transition:background 0.2s,transform 0.15s;}
 .btn-primary:hover{background:var(--gold-light);transform:translateY(-1px);}
 .btn-danger{width:100%;background:none;color:#e05555;border:1px solid rgba(224,85,85,0.3);cursor:pointer;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;padding:12px 24px;border-radius:2px;margin-top:12px;transition:background 0.2s,border-color 0.2s;}
 .btn-danger:hover{background:rgba(224,85,85,0.08);border-color:#e05555;}
-.btn-excel-admin{display:flex;align-items:center;gap:8px;background:var(--gold);color:white;border:none;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;padding:10px 18px;border-radius:2px;transition:all 0.2s;}
-.btn-excel-admin:hover{background:var(--gold-light);}
 .btn-secondary{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.06);color:var(--admin-text);border:1px solid var(--admin-border);cursor:pointer;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;padding:10px 18px;border-radius:2px;transition:all 0.2s;}
 .btn-secondary:hover{background:rgba(255,255,255,0.1);}
 
 /* TIMELINE */
-.timeline{margin-top:24px;display:flex;flex-direction:column;gap:0;}
+.timeline{margin-top:24px;display:flex;flex-direction:column;}
 .timeline-row{display:flex;align-items:center;gap:16px;padding:12px 0;border-bottom:1px solid var(--admin-border);}
 .timeline-row:last-child{border-bottom:none;}
 .tl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
@@ -91,11 +87,11 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .tl-label{font-size:11px;color:var(--admin-muted);}
 
 /* TABLE */
-.counter-row{display:flex;align-items:center;gap:24px;margin-bottom:20px;flex-wrap:wrap;}
+.counter-row{display:flex;align-items:center;gap:20px;margin-bottom:20px;flex-wrap:wrap;}
 .counter-chip{background:rgba(255,255,255,0.04);border:1px solid var(--admin-border);border-radius:3px;padding:12px 20px;text-align:center;}
 .counter-chip .num{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:300;color:var(--gold-light);line-height:1;}
 .counter-chip .lbl{font-size:9px;letter-spacing:0.2em;color:var(--admin-muted);text-transform:uppercase;margin-top:2px;}
-.tbl-actions{display:flex;gap:10px;margin-left:auto;flex-wrap:wrap;}
+.tbl-actions{display:flex;gap:10px;margin-left:auto;}
 .entries-table{width:100%;border-collapse:collapse;font-size:13px;}
 .entries-table th{text-align:left;font-size:9px;letter-spacing:0.25em;text-transform:uppercase;color:var(--admin-muted);font-weight:600;padding:10px 14px;border-bottom:1px solid var(--admin-border);}
 .entries-table td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.04);color:var(--admin-text);vertical-align:top;}
@@ -114,14 +110,13 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
 .toast{position:fixed;bottom:32px;right:32px;z-index:999;background:var(--gold);color:white;font-size:12px;font-weight:600;letter-spacing:0.1em;padding:14px 24px;border-radius:2px;opacity:0;transform:translateY(16px);transition:opacity 0.3s,transform 0.3s;pointer-events:none;}
 .toast.show{opacity:1;transform:translateY(0);}
-@media(max-width:900px){.page{grid-template-columns:1fr;padding:24px;}.afield-row{grid-template-columns:1fr;}.topbar{padding:16px 24px;}}
+@media(max-width:900px){.page{grid-template-columns:1fr;padding:24px;}.topbar{padding:16px 24px;}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 .page{animation:fadeUp 0.6s ease both;}
 </style>
 </head>
 <body>
 
-<!-- PASSWORD -->
 <div id="passwordScreen">
   <div class="pw-card" id="pwCard">
     <div class="pw-logo">Метлин · Консультации</div>
@@ -129,7 +124,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="pw-sub">Введите пароль для доступа</div>
     <div class="pw-field">
       <input type="password" id="pwInput" placeholder="••••••••" onkeydown="if(event.key==='Enter') checkPassword()">
-      <button class="pw-toggle" onclick="togglePwVisibility()" id="pwToggle" title="Показать пароль">👁</button>
+      <button class="pw-toggle" onclick="togglePwVisibility()" id="pwToggle">👁</button>
     </div>
     <div class="pw-error" id="pwError">Неверный пароль</div>
     <button class="pw-btn" onclick="checkPassword()">Войти →</button>
@@ -138,7 +133,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   </div>
 </div>
 
-<!-- TOPBAR -->
 <div class="topbar">
   <div class="topbar-logo">
     <span class="topbar-badge">Админ</span>
@@ -154,7 +148,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <!-- LEFT -->
   <div>
     <div class="card" style="margin-bottom:24px;">
-      <div class="card-header"><span class="card-title">Статус консультации</span></div>
+      <div class="card-header"><div class="card-title">Статус консультации</div></div>
       <div class="card-body" style="padding:24px;">
         <div class="status-display">
           <div class="status-label">Текущий статус</div>
@@ -165,26 +159,17 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       </div>
     </div>
     <div class="card">
-      <div class="card-header"><span class="card-title">Назначить консультацию</span></div>
+      <div class="card-header"><div class="card-title">Назначить консультацию</div></div>
       <div class="card-body">
         <div class="afield">
           <label>Дата и время начала *</label>
           <input type="datetime-local" id="aStartTime">
-          <div class="hint-text">Запись откроется автоматически за 1 час до этого времени.</div>
-        </div>
-        <div class="afield">
-          <label>Продолжительность</label>
-          <select id="aDuration">
-            <option value="30">30 минут</option><option value="45">45 минут</option>
-            <option value="60" selected>1 час</option><option value="90">1.5 часа</option>
-            <option value="120">2 часа</option><option value="150">2.5 часа</option>
-            <option value="180">3 часа</option><option value="240">4 часа</option>
-          </select>
+          <div class="hint-text">Запись для студентов откроется за 1 час до этого времени. Продолжительность — 2 часа.</div>
         </div>
         <div class="timeline" id="previewTimeline" style="display:none;">
           <div class="timeline-row"><div class="tl-dot" style="background:#5b8df7;box-shadow:0 0 6px #5b8df7"></div><div class="tl-time" id="tlOpen">—</div><div class="tl-label">Открытие записи</div></div>
-          <div class="timeline-row"><div class="tl-dot" style="background:#4fcf6e;box-shadow:0 0 6px #4fcf6e"></div><div class="tl-time" id="tlStart">—</div><div class="tl-label">Начало консультации</div></div>
-          <div class="timeline-row"><div class="tl-dot" style="background:#f87070;box-shadow:0 0 6px #f87070"></div><div class="tl-time" id="tlEnd">—</div><div class="tl-label">Завершение</div></div>
+          <div class="timeline-row"><div class="tl-dot" style="background:#4fcf6e;box-shadow:0 0 6px #4fcf6e"></div><div class="tl-time" id="tlStart">—</div><div class="tl-label">Начало</div></div>
+          <div class="timeline-row"><div class="tl-dot" style="background:#f87070;box-shadow:0 0 6px #f87070"></div><div class="tl-time" id="tlEnd">—</div><div class="tl-label">Завершение (+2ч)</div></div>
         </div>
         <button class="btn-primary" style="margin-top:28px;" onclick="saveSession()">Сохранить расписание →</button>
         <button class="btn-danger" onclick="clearSession()">Отменить консультацию</button>
@@ -201,10 +186,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <div class="counter-chip" style="border-color:rgba(26,122,69,0.25)"><div class="num" style="color:#6df07a" id="cntDZ">0</div><div class="lbl">ДЗ</div></div>
       <div class="counter-chip" style="border-color:rgba(107,63,160,0.25)"><div class="num" style="color:#c49af5" id="cntLaba">0</div><div class="lbl">Лабы</div></div>
       <div class="tbl-actions">
-        <button class="btn-excel-admin" onclick="exportToExcel()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>Excel
-        </button>
-        <button class="btn-secondary" onclick="clearAllApps()">Очистить</button>
+        <button class="btn-secondary" onclick="clearAllApps()">Очистить всё</button>
       </div>
     </div>
     <div id="tableContainer"><div class="empty-state"><em>нет заявок</em>Студенческие заявки появятся здесь</div></div>
@@ -214,59 +196,46 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 <div class="toast" id="toast"></div>
 
 <script>
-// ════ SUPABASE ════
-const SB_URL = 'https://ngknjsoczeuxkuzsvjgf.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5na25qc29jemV1eGt1enN2amdmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwMDYzMzIsImV4cCI6MjA5NDU4MjMzMn0.mY41DJoGUxIlIvYlRcDerkpI-z385flQ4RUW-D12SMk';
-const H = { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+const SB_URL='https://ngknjsoczeuxkuzsvjgf.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5na25qc29jemV1eGt1enN2amdmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwMDYzMzIsImV4cCI6MjA5NDU4MjMzMn0.mY41DJoGUxIlIvYlRcDerkpI-z385flQ4RUW-D12SMk';
+const H={'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Content-Type':'application/json','Prefer':'return=representation'};
 
-async function sbGet(table, params='') { const r=await fetch(`${SB_URL}/rest/v1/${table}?${params}`,{headers:H}); return r.ok?r.json():[]; }
-async function sbPost(table,body) { const r=await fetch(`${SB_URL}/rest/v1/${table}`,{method:'POST',headers:H,body:JSON.stringify(body)}); return r.ok?r.json():null; }
-async function sbPatch(table,filter,body) { const r=await fetch(`${SB_URL}/rest/v1/${table}?${filter}`,{method:'PATCH',headers:{...H,'Prefer':'return=representation'},body:JSON.stringify(body)}); return r.ok?r.json():null; }
-async function sbDelete(table,filter) { const r=await fetch(`${SB_URL}/rest/v1/${table}?${filter}`,{method:'DELETE',headers:H}); return r.ok; }
+async function sbGet(t,p=''){const r=await fetch(`${SB_URL}/rest/v1/${t}?${p}`,{headers:H});return r.ok?r.json():[];}
+async function sbPatch(t,f,b){const r=await fetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'PATCH',headers:{...H,'Prefer':'return=representation'},body:JSON.stringify(b)});return r.ok?r.json():null;}
+async function sbDelete(t,f){const r=await fetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'DELETE',headers:H});return r.ok;}
 
-// ════ PASSWORD ════
-const ADMIN_PASSWORD = 'metlin2025';
-const AUTH_KEY = 'metlin_admin_auth';
-
-function checkPassword() {
-  const input = document.getElementById('pwInput').value;
-  const card  = document.getElementById('pwCard');
-  const err   = document.getElementById('pwError');
-  if (input === ADMIN_PASSWORD) {
-    if (document.getElementById('pwRemember').checked) localStorage.setItem(AUTH_KEY,'true');
+// PASSWORD
+const ADMIN_PASSWORD='metlin2025';
+const AUTH_KEY='metlin_admin_auth';
+function checkPassword(){
+  const input=document.getElementById('pwInput').value,card=document.getElementById('pwCard'),err=document.getElementById('pwError');
+  if(input===ADMIN_PASSWORD){
+    if(document.getElementById('pwRemember').checked)localStorage.setItem(AUTH_KEY,'true');
     else sessionStorage.setItem(AUTH_KEY,'true');
     document.getElementById('passwordScreen').style.display='none';
-    document.getElementById('pwInput').value=''; err.classList.remove('visible');
+    document.getElementById('pwInput').value='';err.classList.remove('visible');
   } else {
-    err.classList.add('visible'); card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
-    document.getElementById('pwInput').value=''; document.getElementById('pwInput').focus();
+    err.classList.add('visible');card.classList.remove('shake');void card.offsetWidth;card.classList.add('shake');
+    document.getElementById('pwInput').value='';document.getElementById('pwInput').focus();
   }
 }
-function togglePwVisibility() { const i=document.getElementById('pwInput'),b=document.getElementById('pwToggle'); if(i.type==='password'){i.type='text';b.textContent='🙈';}else{i.type='password';b.textContent='👁';} }
-function isAuthenticated() { return localStorage.getItem(AUTH_KEY)==='true'||sessionStorage.getItem(AUTH_KEY)==='true'; }
-function showPasswordScreen() { document.getElementById('passwordScreen').style.display='flex'; setTimeout(()=>document.getElementById('pwInput').focus(),100); }
-function logout() { localStorage.removeItem(AUTH_KEY); sessionStorage.removeItem(AUTH_KEY); showPasswordScreen(); }
+function togglePwVisibility(){const i=document.getElementById('pwInput'),b=document.getElementById('pwToggle');if(i.type==='password'){i.type='text';b.textContent='🙈';}else{i.type='password';b.textContent='👁';}}
+function isAuthenticated(){return localStorage.getItem(AUTH_KEY)==='true'||sessionStorage.getItem(AUTH_KEY)==='true';}
+function showPasswordScreen(){document.getElementById('passwordScreen').style.display='flex';setTimeout(()=>document.getElementById('pwInput').focus(),100);}
+function logout(){localStorage.removeItem(AUTH_KEY);sessionStorage.removeItem(AUTH_KEY);showPasswordScreen();}
 
-// ════ TOAST ════
-function toast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
-// ════ STATE ════
-let allApps = [];
-let currentSession = null;
+let allApps=[],currentSession=null;
 
-// ════ TOPBAR CLOCK ════
-function updateTopbarTime() { document.getElementById('topbarTime').textContent=new Date().toLocaleString('ru-RU',{weekday:'short',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
+function updateTopbarTime(){document.getElementById('topbarTime').textContent=new Date().toLocaleString('ru-RU',{weekday:'short',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',second:'2-digit'});}
 
-// ════ TIMELINE PREVIEW ════
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('aStartTime').addEventListener('input', updatePreview);
-  document.getElementById('aDuration').addEventListener('change', updatePreview);
-});
-function updatePreview() {
-  const val=document.getElementById('aStartTime').value, dur=parseInt(document.getElementById('aDuration').value);
+// TIMELINE PREVIEW
+function updatePreview(){
+  const val=document.getElementById('aStartTime').value;
   const tl=document.getElementById('previewTimeline');
   if(!val){tl.style.display='none';return;}
-  const start=new Date(val).getTime(), open=start-3600000, end=start+dur*60000;
+  const start=new Date(val).getTime(),open=start-3600000,end=start+120*60000;
   const fmt=ts=>new Date(ts).toLocaleString('ru-RU',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'});
   document.getElementById('tlOpen').textContent=fmt(open);
   document.getElementById('tlStart').textContent=fmt(start);
@@ -274,55 +243,48 @@ function updatePreview() {
   tl.style.display='flex';
 }
 
-// ════ SESSION ════
-async function saveSession() {
-  const val=document.getElementById('aStartTime').value, dur=parseInt(document.getElementById('aDuration').value);
+// SESSION
+async function saveSession(){
+  const val=document.getElementById('aStartTime').value;
   if(!val){alert('Укажите дату и время начала.');return;}
-  const start_ts=new Date(val).getTime(), duration_ms=dur*60000;
-  await sbPatch('session','id=eq.1',{start_ts, duration_ms, updated_at: new Date().toISOString()});
+  const start_ts=new Date(val).getTime(),duration_ms=120*60000;
+  await sbPatch('session','id=eq.1',{start_ts,duration_ms,updated_at:new Date().toISOString()});
   toast('Расписание сохранено ✓');
   await refreshData();
 }
-async function clearSession() {
+async function clearSession(){
   if(!confirm('Отменить консультацию?'))return;
-  await sbPatch('session','id=eq.1',{start_ts:null, duration_ms:null, updated_at: new Date().toISOString()});
+  await sbPatch('session','id=eq.1',{start_ts:null,duration_ms:null,updated_at:new Date().toISOString()});
   toast('Консультация отменена');
   await refreshData();
 }
 
-// ════ SESSION STATE ════
-function getSessionState(s) {
+function getSessionState(s){
   if(!s||!s.start_ts)return null;
   const now=Date.now(),start=s.start_ts,end=start+s.duration_ms,open=start-3600000;
   if(now<open)return'waiting';if(now<start)return'open';if(now<end)return'live';return'ended';
 }
 
-function updateAdminStatus() {
-  const s=currentSession, state=getSessionState(s);
-  const dotEl=document.getElementById('statusDot'), textEl=document.getElementById('statusText');
-  const clockEl=document.getElementById('adminClock'), lblEl=document.getElementById('adminClockLabel');
+function updateAdminStatus(){
+  const s=currentSession,state=getSessionState(s);
+  const dotEl=document.getElementById('statusDot'),textEl=document.getElementById('statusText');
+  const clockEl=document.getElementById('adminClock'),lblEl=document.getElementById('adminClockLabel');
   dotEl.className='status-dot';
   if(!state||!s){dotEl.classList.add('dot-none');textEl.textContent='Не назначена';clockEl.textContent='—';lblEl.textContent='—';return;}
   const now=Date.now(),start=s.start_ts,end=start+s.duration_ms,open=start-3600000;
-  let remaining=0, label='';
-  if(state==='waiting'){dotEl.classList.add('dot-waiting');textEl.textContent='Ожидание (запись закрыта)';remaining=open-now;label='до открытия записи';}
+  let remaining=0,label='';
+  if(state==='waiting'){dotEl.classList.add('dot-waiting');textEl.textContent='Ожидание';remaining=open-now;label='до открытия записи';}
   else if(state==='open'){dotEl.classList.add('dot-open');textEl.textContent='Запись открыта';remaining=start-now;label='до начала';}
-  else if(state==='live'){dotEl.classList.add('dot-live');textEl.textContent='🔴 Консультация идёт';remaining=end-now;label='осталось';}
+  else if(state==='live'){dotEl.classList.add('dot-live');textEl.textContent='🔴 Идёт';remaining=end-now;label='осталось';}
   else{dotEl.classList.add('dot-ended');textEl.textContent='Завершена';clockEl.textContent='—';lblEl.textContent='—';return;}
   const t=Math.max(0,Math.floor(remaining/1000)),h=Math.floor(t/3600),m=Math.floor((t%3600)/60),sec=t%60;
   clockEl.textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
   lblEl.textContent=label;
 }
 
-// ════ TABLE ════
-const TASK_COLORS = {
-  'РК':        {bg:'rgba(192,57,43,0.12)',  color:'#e07070'},
-  'Микротест': {bg:'rgba(37,99,176,0.12)',  color:'#7eb8f7'},
-  'ДЗ':        {bg:'rgba(26,122,69,0.12)',  color:'#6df07a'},
-  'Лаба':      {bg:'rgba(107,63,160,0.12)', color:'#c49af5'},
-};
+const TC={'РК':{bg:'rgba(192,57,43,0.12)',color:'#e07070'},'Микротест':{bg:'rgba(37,99,176,0.12)',color:'#7eb8f7'},'ДЗ':{bg:'rgba(26,122,69,0.12)',color:'#6df07a'},'Лаба':{bg:'rgba(107,63,160,0.12)',color:'#c49af5'}};
 
-function renderTable() {
+function renderTable(){
   const data=[...allApps].sort((a,b)=>a.priority!==b.priority?a.priority-b.priority:a.id-b.id);
   const c=document.getElementById('tableContainer');
   document.getElementById('adminCounter').textContent=data.length;
@@ -331,21 +293,21 @@ function renderTable() {
   document.getElementById('cntDZ').textContent=data.filter(e=>e.task_type==='ДЗ').length;
   document.getElementById('cntLaba').textContent=data.filter(e=>e.task_type==='Лаба').length;
   if(!data.length){c.innerHTML='<div class="empty-state"><em>нет заявок</em>Студенческие заявки появятся здесь</div>';return;}
-  let html=`<table class="entries-table"><thead><tr><th>#</th><th>Время</th><th>Фамилия Имя</th><th>Группа</th><th>День</th><th>Тип</th><th>Комментарий</th><th>Статус</th><th></th></tr></thead><tbody>`;
+  let html=`<table class="entries-table"><thead><tr><th>#</th><th>Время</th><th>Фамилия Имя</th><th>Группа</th><th>Тип</th><th>Комментарий</th><th>Статус</th><th></th></tr></thead><tbody>`;
   data.forEach((e,i)=>{
-    const tc=TASK_COLORS[e.task_type]||{bg:'rgba(255,255,255,0.06)',color:'#aaa'};
-    const isDone=e.status==='Сдано', isAccepted=e.status==='Принято';
+    const tc=TC[e.task_type]||{bg:'rgba(255,255,255,0.06)',color:'#aaa'};
+    const isDone=e.status==='Сдано',isAccepted=e.status==='Принято';
     const dt=new Date(e.created_at).toLocaleString('ru-RU');
     html+=`<tr>
-      <td style="color:var(--admin-muted);font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:300;text-align:center">${i+1}</td>
-      <td style="font-size:12px;color:var(--admin-muted)">${dt}</td>
+      <td style="color:var(--admin-muted);font-family:'Cormorant Garamond',serif;font-size:18px;text-align:center">${i+1}</td>
+      <td style="font-size:11px;color:var(--admin-muted)">${dt}</td>
       <td><strong style="color:white">${e.last_name} ${e.first_name}</strong></td>
-      <td>${e.grp}</td><td>${e.day}</td>
+      <td>${e.grp}</td>
       <td><span class="tag" style="background:${tc.bg};color:${tc.color}">${e.task_type}</span></td>
-      <td style="max-width:180px;word-break:break-word;font-size:12px;color:var(--admin-muted)">${e.comment}</td>
+      <td style="max-width:160px;word-break:break-word;font-size:11px;color:var(--admin-muted)">${e.comment}</td>
       <td><span class="tag ${isDone?'tag-done-lbl':isAccepted?'tag-done':'tag-new'}">${e.status}</span></td>
       <td class="status-toggle-cell">
-        ${isDone?`<button class="btn-unmark" onclick="setStatus(${e.id},'Новая')">↩</button>`:isAccepted?`<button class="btn-unmark" onclick="setStatus(${e.id},'Новая')">↩</button>`:`<button class="btn-mark-done" onclick="setStatus(${e.id},'Принято')">✓</button>`}
+        ${isDone||isAccepted?`<button class="btn-unmark" onclick="setStatus(${e.id},'Новая')">↩</button>`:`<button class="btn-mark-done" onclick="setStatus(${e.id},'Принято')">✓</button>`}
         <button class="btn-delete-row" onclick="deleteEntry(${e.id})">✕</button>
       </td>
     </tr>`;
@@ -354,66 +316,40 @@ function renderTable() {
   c.innerHTML=html;
 }
 
-async function setStatus(id,status) { await sbPatch('applications',`id=eq.${id}`,{status}); await refreshData(); }
-async function deleteEntry(id) { if(!confirm('Удалить эту заявку?'))return; await sbDelete('applications',`id=eq.${id}`); await refreshData(); }
-async function clearAllApps() { if(!confirm('Удалить все заявки?'))return; await sbDelete('applications','id=gte.0'); await refreshData(); toast('Все заявки удалены'); }
+async function setStatus(id,status){await sbPatch('applications',`id=eq.${id}`,{status});await refreshData();}
+async function deleteEntry(id){if(!confirm('Удалить эту заявку?'))return;await sbDelete('applications',`id=eq.${id}`);await refreshData();}
+async function clearAllApps(){if(!confirm('Удалить все заявки?'))return;await sbDelete('applications','id=gte.0');await refreshData();toast('Все заявки удалены');}
 
-// ════ EXCEL ════
-function exportToExcel() {
-  if(!allApps.length){alert('Нет заявок.');return;}
-  const data=[...allApps].sort((a,b)=>a.priority!==b.priority?a.priority-b.priority:a.id-b.id);
-  const rows=[['#','Дата заявки','Фамилия','Имя','Группа','День','Тип','Комментарий','Статус']];
-  data.forEach((e,i)=>rows.push([i+1,new Date(e.created_at).toLocaleString('ru-RU'),e.last_name,e.first_name,e.grp,e.day,e.task_type,e.comment,e.status]));
-  const ws=XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols']=[{wch:4},{wch:20},{wch:18},{wch:16},{wch:12},{wch:10},{wch:14},{wch:36},{wch:12}];
-  const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,'Заявки');
-  XLSX.writeFile(wb,`Metlin_Admin_${new Date().toLocaleDateString('ru-RU').replace(/\./g,'-')}.xlsx`);
-}
-
-// ════ REFRESH ════
-async function refreshData() {
-  const [apps,sessions]=await Promise.all([
-    sbGet('applications','order=id.asc'),
-    sbGet('session','id=eq.1')
-  ]);
+async function refreshData(){
+  const [apps,sessions]=await Promise.all([sbGet('applications','order=id.asc'),sbGet('session','id=eq.1')]);
   allApps=Array.isArray(apps)?apps:[];
   currentSession=Array.isArray(sessions)&&sessions[0]?sessions[0]:null;
-  renderTable();
-  updateAdminStatus();
-
-  // Restore session into form fields
+  renderTable(); updateAdminStatus();
   if(currentSession&&currentSession.start_ts){
-    const d=new Date(currentSession.start_ts);
-    const pad=n=>String(n).padStart(2,'0');
+    const d=new Date(currentSession.start_ts),pad=n=>String(n).padStart(2,'0');
     document.getElementById('aStartTime').value=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    document.getElementById('aDuration').value=String(currentSession.duration_ms/60000);
     updatePreview();
   }
 }
 
-// ════ REALTIME ════
-function connectRealtime() {
-  const wsUrl=`${SB_URL.replace('https','wss')}/realtime/v1/websocket?apikey=${SB_KEY}&vsn=1.0.0`;
-  const ws=new WebSocket(wsUrl);
+function connectRealtime(){
+  const ws=new WebSocket(`${SB_URL.replace('https','wss')}/realtime/v1/websocket?apikey=${SB_KEY}&vsn=1.0.0`);
   ws.onopen=()=>{
     ws.send(JSON.stringify({topic:'realtime:public:applications',event:'phx_join',payload:{},ref:'1'}));
     ws.send(JSON.stringify({topic:'realtime:public:session',event:'phx_join',payload:{},ref:'2'}));
   };
-  ws.onmessage=async(e)=>{ const msg=JSON.parse(e.data); if(msg.event==='phx_reply')return; if(msg.topic?.startsWith('realtime:public:'))await refreshData(); };
+  ws.onmessage=async(e)=>{const m=JSON.parse(e.data);if(m.event==='phx_reply')return;if(m.topic?.startsWith('realtime:public:'))await refreshData();};
   ws.onclose=()=>setTimeout(connectRealtime,3000);
   ws.onerror=()=>ws.close();
 }
 
-// ════ INIT ════
-document.addEventListener('DOMContentLoaded', async () => {
-  if(!isAuthenticated()) showPasswordScreen();
-
-  const now=new Date(); now.setMinutes(0,0,0); now.setHours(now.getHours()+2);
+document.addEventListener('DOMContentLoaded',async()=>{
+  if(!isAuthenticated())showPasswordScreen();
+  document.getElementById('aStartTime').addEventListener('input',updatePreview);
+  const now=new Date();now.setMinutes(0,0,0);now.setHours(now.getHours()+2);
   const pad=n=>String(n).padStart(2,'0');
   document.getElementById('aStartTime').value=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:00`;
   updatePreview();
-
   await refreshData();
   connectRealtime();
   updateTopbarTime();
