@@ -196,23 +196,34 @@ main {
 }
 
 /* priority badges */
-.priority-grid {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
-  margin-top: 20px;
+
+
+
+ 
+ 
+  
+ 
+
+/* ════ TASK COUNTERS ════ */
+.task-counters {
+  display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px;
 }
-.p-badge {
-  background: var(--card);
-  border: 1px solid var(--border2);
-  border-radius: 6px;
-  padding: 10px 8px;
-  text-align: center;
+.task-chip {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--card); border: 1px solid var(--border2);
+  border-radius: 8px; padding: 10px 16px;
+  min-width: 0; flex: 1;
 }
-.p-badge .p-num { font-family:'Unbounded',sans-serif; font-size:18px; font-weight:700; line-height:1; }
-.p-badge .p-name { font-size:10px; color:var(--muted); margin-top:4px; letter-spacing:0.05em; }
-.p-badge.p1 { border-color:rgba(192,57,43,0.3); } .p-badge.p1 .p-num { color:#e07070; }
-.p-badge.p2 { border-color:rgba(212,168,67,0.3); } .p-badge.p2 .p-num { color:var(--gold); }
-.p-badge.p3 { border-color:rgba(37,99,176,0.3); }  .p-badge.p3 .p-num { color:#7eb8f7; }
-.p-badge.p4 { border-color:rgba(107,63,160,0.3); } .p-badge.p4 .p-num { color:#c49af5; }
+.task-chip .tc-num {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 22px; font-weight: 700; line-height: 1;
+  transition: transform 0.2s;
+}
+.task-chip .tc-label { font-size: 10px; color: var(--muted); letter-spacing: 0.05em; }
+.task-chip.tc-rk    { border-color: rgba(192,57,43,0.25); } .task-chip.tc-rk    .tc-num { color: #e07070; }
+.task-chip.tc-micro { border-color: rgba(37,99,176,0.25);  } .task-chip.tc-micro .tc-num { color: #7eb8f7; }
+.task-chip.tc-dz    { border-color: rgba(126,203,95,0.2);  } .task-chip.tc-dz    .tc-num { color: var(--lime); }
+.task-chip.tc-laba  { border-color: rgba(107,63,160,0.25); } .task-chip.tc-laba  .tc-num { color: #c49af5; }
 
 /* ════ FORM CARD ════ */
 .form-card {
@@ -362,7 +373,6 @@ footer a:hover { text-decoration:underline; }
   .header-divider { margin:0 20px; }
   .my-entries-wrap,.queue-wrap { padding-left:20px; padding-right:20px; }
   .banner-inner { padding:18px 20px; }
-  .priority-grid { grid-template-columns:repeat(2,1fr); }
   footer { padding:20px; }
 }
 @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
@@ -428,12 +438,12 @@ footer a:hover { text-decoration:underline; }
       <li><span class="rule-num">03</span>После сдачи нажми «Сдано» в «Мои записи»</li>
     </ul>
 
-    <div class="priority-grid" style="margin-top:20px;">
-      <div class="p-badge p1"><div class="p-num">1</div><div class="p-name">РК</div></div>
-      <div class="p-badge p2"><div class="p-num">2</div><div class="p-name">Микротест / ДЗ</div></div>
-      <div class="p-badge p3"><div class="p-num">3</div><div class="p-name">ДЗ / Микро</div></div>
-      <div class="p-badge p4"><div class="p-num">4</div><div class="p-name">Лаба</div></div>
-    </div>
+    <div class="task-counters">
+      <div class="task-chip tc-rk"><div><div class="tc-num" id="cntRK">0</div><div class="tc-label">РК</div></div></div>
+      <div class="task-chip tc-micro"><div><div class="tc-num" id="cntMicro">0</div><div class="tc-label">Микротест</div></div></div>
+      <div class="task-chip tc-dz"><div><div class="tc-num" id="cntDZ">0</div><div class="tc-label">ДЗ</div></div></div>
+      <div class="task-chip tc-laba"><div><div class="tc-num" id="cntLaba">0</div><div class="tc-label">Лаба</div></div></div>
+    </div></div>
   </div>
 
   <!-- RIGHT: FORM -->
@@ -536,11 +546,17 @@ function updateBanner(){
   let remaining=0,lbl='',status='';
   if(state==='waiting'){remaining=open-now;lbl='До открытия записи';status='Запись скоро откроется';setFormLocked(true,'Запись ещё закрыта','Откроется за час до начала');}
   else if(state==='open'){remaining=start-now;lbl='Игра начнётся через';status='🎮 Запись открыта!';setFormLocked(false);}
-  else if(state==='live'){remaining=end-now;lbl='Игра идёт — осталось';status='🔴 Игра идёт';setFormLocked(false);}
+  else if(state==='live'){remaining=end-now;lbl='Игра идёт';status='🔴 Игра идёт';setFormLocked(false);}
   else{remaining=0;lbl='Завершено';status='Консультация завершена';setFormLocked(true,'Завершено','Запись закрыта');}
   document.getElementById('bannerLabel').textContent=lbl;
   document.getElementById('bannerStatus').textContent=status;
-  const t=Math.max(0,Math.floor(remaining/1000));
+  // During live: show elapsed time (count up from start), otherwise countdown
+  let t;
+  if(state==='live'){
+    t=Math.max(0,Math.floor((now-start)/1000));
+  } else {
+    t=Math.max(0,Math.floor(remaining/1000));
+  }
   document.getElementById('clkH').textContent=String(Math.floor(t/3600)).padStart(2,'0');
   document.getElementById('clkM').textContent=String(Math.floor((t%3600)/60)).padStart(2,'0');
   document.getElementById('clkS').textContent=String(t%60).padStart(2,'0');
@@ -662,7 +678,16 @@ function renderQueue(){
   c.innerHTML=`<table class="entries-table"><thead><tr><th>#</th><th>Время</th><th>Студент</th><th>Группа</th><th>Задание</th><th>Статус</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
-function renderAll(){renderMyEntries();renderQueue();updateDeviceLockOverlay();}
+function renderAll(){renderMyEntries();renderQueue();updateCounters();updateDeviceLockOverlay();}
+
+function updateCounters(){
+  const active = allApps.filter(e => e.status !== 'Сдано');
+  document.getElementById('cntRK').textContent    = active.filter(e => e.task_type === 'РК').length;
+  document.getElementById('cntMicro').textContent = active.filter(e => e.task_type === 'Микротест').length;
+  document.getElementById('cntDZ').textContent    = active.filter(e => e.task_type === 'ДЗ').length;
+  document.getElementById('cntLaba').textContent  = active.filter(e => e.task_type === 'Лаба').length;
+}
+
 
 async function refreshData(){
   const [apps,sessions]=await Promise.all([sbGet('applications','order=id.asc'),sbGet('session','id=eq.1')]);
