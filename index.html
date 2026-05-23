@@ -688,7 +688,7 @@ function renderMyEntries(){
       </div>
       <span class="my-entry-badge ${BADGE[e.task_type]||''}">${e.task_type}</span>
       <span class="my-entry-status-lbl ${sCls}">${sTxt}</span>
-      ${!isDone?`<button class="btn-mark-done" onclick="markDone(${e.id})">Сдал ✓</button>`:''}
+      ${!isDone?`<button class="btn-mark-done" onclick="markDone(${e.id})">Вышел ✓</button>`:''}
     </div>`;
   }).join('');
 }
