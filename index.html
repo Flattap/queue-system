@@ -376,6 +376,30 @@ footer a:hover { text-decoration:underline; }
   footer { padding:20px; }
 }
 @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+/* ════ RESTORE BANNER ════ */
+#restoreBanner {
+  display: none; position: relative; z-index: 9;
+  background: linear-gradient(135deg, #1a1a0d, #2a2a10);
+  border-bottom: 1px solid rgba(212,168,67,0.3);
+}
+.restore-inner {
+  max-width: 1100px; margin: 0 auto; padding: 16px 40px;
+  display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
+}
+.restore-text { font-size: 13px; color: #d4a843; }
+.restore-text strong { font-family: 'Unbounded', sans-serif; font-size: 11px; }
+.restore-countdown { font-family: 'Unbounded', sans-serif; font-size: 12px; color: rgba(212,168,67,0.6); }
+.btn-restore {
+  background: rgba(212,168,67,0.15); color: #d4a843;
+  border: 1px solid rgba(212,168,67,0.35); border-radius: 6px;
+  font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 9px 18px; cursor: pointer; white-space: nowrap;
+  transition: all 0.2s; flex-shrink: 0;
+}
+.btn-restore:hover { background: rgba(212,168,67,0.28); border-color: #d4a843; }
+@media(max-width:768px){ .restore-inner { padding: 14px 20px; } }
 </style>
 </head>
 <body>
@@ -400,6 +424,16 @@ footer a:hover { text-decoration:underline; }
   </div>
 </div>
 
+<!-- RESTORE BANNER -->
+<div id="restoreBanner">
+  <div class="restore-inner">
+    <div>
+      <div class="restore-text"><strong>Консультация завершена</strong> — список будет удалён через <span id="restoreCountdown">10:00</span></div>
+    </div>
+    <button class="btn-restore" onclick="restoreList()">↩ Восстановить список</button>
+  </div>
+</div>
+
 <!-- HEADER -->
 <header>
   <div class="header-top">
@@ -407,7 +441,7 @@ footer a:hover { text-decoration:underline; }
       <div class="header-icon">⚡</div>
       <div class="header-titles">
         <h1>Авада-на-пересдачу</h1>
-        <div class="sub">Запись на сдачу долгов · Физика · Метлин М.А.</div>
+        <div class="sub">Запись на сдачу долгов · Физика · Метлин М.Т.</div>
       </div>
     </div>
     <a class="yt-link" href="https://www.youtube.com/@mikhail.metlin" target="_blank" rel="noopener">
@@ -503,7 +537,7 @@ footer a:hover { text-decoration:underline; }
 </div>
 
 <footer>
-  <span>Авада-на-пересдачу · Физика · Метлин М.А.</span>
+  <span>Авада-на-пересдачу · Физика · Метлин М.Т.</span>
   <a href="https://www.youtube.com/@mikhail.metlin" target="_blank" rel="noopener">@mikhail.metlin на YouTube</a>
 </footer>
 
@@ -547,7 +581,11 @@ function updateBanner(){
   if(state==='waiting'){remaining=open-now;lbl='До открытия записи';status='Запись скоро откроется';setFormLocked(true,'Запись ещё закрыта','Откроется за час до начала');}
   else if(state==='open'){remaining=start-now;lbl='Игра начнётся через';status='🎮 Запись открыта!';setFormLocked(false);}
   else if(state==='live'){remaining=end-now;lbl='Игра идёт';status='🔴 Игра идёт';setFormLocked(false);}
-  else{remaining=0;lbl='Завершено';status='Консультация завершена';setFormLocked(true,'Завершено','Запись закрыта');}
+  else{
+    remaining=0; lbl='Завершено'; status='Консультация завершена';
+    setFormLocked(true,'Консультация завершена','Запись закрыта');
+    autoArchiveOnEnd();
+  }
   document.getElementById('bannerLabel').textContent=lbl;
   document.getElementById('bannerStatus').textContent=status;
   // During live: show elapsed time (count up from start), otherwise countdown
@@ -655,9 +693,9 @@ function renderMyEntries(){
 }
 
 function renderQueue(){
-  const data=[...allApps].sort((a,b)=>a.priority!==b.priority?a.priority-b.priority:a.id-b.id);
+  const data=[...allApps].filter(e=>e.status!=='Архив').sort((a,b)=>a.priority!==b.priority?a.priority-b.priority:a.id-b.id);
   const c=document.getElementById('tableContainer');
-  document.getElementById('counterNum').textContent=data.filter(e=>e.status!=='Сдано').length;
+  document.getElementById('counterNum').textContent=data.filter(e=>e.status!=='Сдано'&&e.status!=='Архив').length;
   if(!data.length){c.innerHTML='<div class="empty-state"><em>Очередь пуста</em>Заявки появятся здесь после открытия записи</div>';return;}
   let qPos=0;
   const rows=data.map(e=>{
@@ -681,7 +719,7 @@ function renderQueue(){
 function renderAll(){renderMyEntries();renderQueue();updateCounters();updateDeviceLockOverlay();}
 
 function updateCounters(){
-  const active = allApps.filter(e => e.status !== 'Сдано');
+  const active = allApps.filter(e => e.status !== 'Сдано' && e.status !== 'Архив');
   document.getElementById('cntRK').textContent    = active.filter(e => e.task_type === 'РК').length;
   document.getElementById('cntMicro').textContent = active.filter(e => e.task_type === 'Микротест').length;
   document.getElementById('cntDZ').textContent    = active.filter(e => e.task_type === 'ДЗ').length;
@@ -694,6 +732,98 @@ async function refreshData(){
   allApps=Array.isArray(apps)?apps:[];
   currentSession=Array.isArray(sessions)&&sessions[0]?sessions[0]:null;
   renderAll(); updateBanner();
+}
+
+
+// ════ AUTO-ARCHIVE ON SESSION END ════
+let _archiveDone = false;
+let _restoreTimer = null;
+const ARCHIVE_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
+
+async function autoArchiveOnEnd() {
+  if (_archiveDone) return;
+  const s = currentSession;
+  if (!s || !s.start_ts) return;
+  const endTs = s.start_ts + s.duration_ms;
+  if (Date.now() < endTs) return; // not actually ended yet
+
+  _archiveDone = true;
+
+  // Archive all non-archived entries
+  const toArchive = allApps.filter(e => e.status !== 'Архив' && e.status !== 'Сдано');
+  if (toArchive.length === 0) return;
+
+  // Batch patch: mark all as Архив with archived_at timestamp
+  await Promise.all(toArchive.map(e =>
+    fetch(`${SB_URL}/rest/v1/applications?id=eq.${e.id}`, {
+      method: 'PATCH',
+      headers: {...H, 'Prefer': 'return=minimal'},
+      body: JSON.stringify({ status: 'Архив' })
+    })
+  ));
+
+  await refreshData();
+  startRestoreCountdown(endTs);
+}
+
+function startRestoreCountdown(endTs) {
+  const banner = document.getElementById('restoreBanner');
+  const countdown = document.getElementById('restoreCountdown');
+  banner.style.display = 'block';
+
+  if (_restoreTimer) clearInterval(_restoreTimer);
+
+  _restoreTimer = setInterval(() => {
+    const elapsed = Date.now() - endTs;
+    const remaining = ARCHIVE_WINDOW_MS - elapsed;
+    if (remaining <= 0) {
+      clearInterval(_restoreTimer);
+      banner.style.display = 'none';
+      // Permanently delete archived entries after 10 min
+      deleteArchived();
+      return;
+    }
+    const m = String(Math.floor(remaining / 60000)).padStart(2, '0');
+    const s = String(Math.floor((remaining % 60000) / 1000)).padStart(2, '0');
+    countdown.textContent = `${m}:${s}`;
+  }, 1000);
+}
+
+async function restoreList() {
+  if (_restoreTimer) clearInterval(_restoreTimer);
+  document.getElementById('restoreBanner').style.display = 'none';
+  _archiveDone = false;
+
+  // Restore all archived entries back to 'Новая'
+  const archived = allApps.filter(e => e.status === 'Архив');
+  await Promise.all(archived.map(e =>
+    fetch(`${SB_URL}/rest/v1/applications?id=eq.${e.id}`, {
+      method: 'PATCH',
+      headers: {...H, 'Prefer': 'return=minimal'},
+      body: JSON.stringify({ status: 'Новая' })
+    })
+  ));
+  await refreshData();
+}
+
+async function deleteArchived() {
+  await fetch(`${SB_URL}/rest/v1/applications?status=eq.Архив`, {
+    method: 'DELETE', headers: H
+  });
+  await refreshData();
+}
+
+// On page load: check if we're in the restore window (session ended < 10min ago)
+function checkRestoreWindow() {
+  const s = currentSession;
+  if (!s || !s.start_ts || !s.duration_ms) return;
+  const endTs = s.start_ts + s.duration_ms;
+  const elapsed = Date.now() - endTs;
+  const hasArchived = allApps.some(e => e.status === 'Архив');
+  if (elapsed > 0 && elapsed < ARCHIVE_WINDOW_MS && hasArchived) {
+    _archiveDone = true;
+    startRestoreCountdown(endTs);
+  }
 }
 
 function connectRealtime(){
@@ -709,6 +839,7 @@ function connectRealtime(){
 
 document.addEventListener('DOMContentLoaded',async()=>{
   await refreshData();
+  checkRestoreWindow();
   connectRealtime();
   setInterval(updateBanner,1000);
   setInterval(refreshData,15000);
