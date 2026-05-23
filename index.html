@@ -547,6 +547,7 @@ const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 const H = { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
 
 async function sbGet(t,p='') { const r=await fetch(`${SB_URL}/rest/v1/${t}?${p}`,{headers:H}); return r.ok?r.json():[]; }
+async function sbRpc(fn,params={}) { const r=await fetch(`${SB_URL}/rest/v1/rpc/${fn}`,{method:'POST',headers:H,body:JSON.stringify(params)}); return r.ok?r.json():[]; }
 async function sbPost(t,b) { const r=await fetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',headers:H,body:JSON.stringify(b)}); return r.ok?r.json():null; }
 async function sbPatch(t,id,b) { const r=await fetch(`${SB_URL}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:{...H,'Prefer':'return=representation'},body:JSON.stringify(b)}); return r.ok?r.json():null; }
 
@@ -693,7 +694,12 @@ function renderMyEntries(){
 }
 
 function renderQueue(){
-  const data=[...allApps].filter(e=>e.status!=='Архив').sort((a,b)=>a.priority!==b.priority?a.priority-b.priority:a.id-b.id);
+  const data=[...allApps].filter(e=>e.status!=='Архив').sort((a,b)=>{
+    const aRK = a.task_type==='РК' ? 0 : 1;
+    const bRK = b.task_type==='РК' ? 0 : 1;
+    if (aRK !== bRK) return aRK - bRK; // РК first
+    return a.id - b.id; // then strictly by registration time
+  });
   const c=document.getElementById('tableContainer');
   document.getElementById('counterNum').textContent=data.filter(e=>e.status!=='Сдано'&&e.status!=='Архив').length;
   if(!data.length){c.innerHTML='<div class="empty-state"><em>Очередь пуста</em>Заявки появятся здесь после открытия записи</div>';return;}
@@ -728,7 +734,7 @@ function updateCounters(){
 
 
 async function refreshData(){
-  const [apps,sessions]=await Promise.all([sbGet('applications','order=id.asc'),sbGet('session','id=eq.1')]);
+  const [apps,sessions]=await Promise.all([sbRpc('get_sorted_applications'),sbGet('session','id=eq.1')]);
   allApps=Array.isArray(apps)?apps:[];
   currentSession=Array.isArray(sessions)&&sessions[0]?sessions[0]:null;
   renderAll(); updateBanner();

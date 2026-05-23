@@ -97,7 +97,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .entries-table td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.04);color:var(--admin-text);vertical-align:top;}
 .entries-table tr:hover td{background:rgba(255,255,255,0.025);}
 .tag{display:inline-block;font-size:10px;letter-spacing:0.08em;padding:3px 10px;border-radius:20px;font-weight:500;}
-.tag-new{background:rgba(184,147,90,0.15);color:var(--gold);} .tag-done{background:rgba(79,207,110,0.1);color:#4fcf6e;} .tag-done-lbl{background:rgba(180,180,180,0.12);color:#888;}
+.tag-new{background:rgba(184,147,90,0.15);color:var(--gold);} .tag-done{background:rgba(79,207,110,0.1);color:#4fcf6e;} .tag-done-lbl{background:rgba(180,180,180,0.12);color:#888;} .tag-archived{background:rgba(212,168,67,0.1);color:#d4a843;}
 .empty-state{text-align:center;padding:48px 20px;color:var(--admin-muted);font-size:13px;}
 .empty-state em{display:block;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:28px;color:rgba(255,255,255,0.08);margin-bottom:10px;}
 .status-toggle-cell button{font-size:9px;letter-spacing:0.1em;text-transform:uppercase;padding:4px 10px;border-radius:2px;cursor:pointer;border:1px solid;font-family:'Montserrat',sans-serif;font-weight:600;transition:all 0.15s;}
@@ -186,6 +186,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <div class="counter-chip" style="border-color:rgba(26,122,69,0.25)"><div class="num" style="color:#6df07a" id="cntDZ">0</div><div class="lbl">ДЗ</div></div>
       <div class="counter-chip" style="border-color:rgba(107,63,160,0.25)"><div class="num" style="color:#c49af5" id="cntLaba">0</div><div class="lbl">Лабы</div></div>
       <div class="tbl-actions">
+        <button class="btn-secondary" id="btnRestore" onclick="restoreArchived()" style="display:none;border-color:rgba(212,168,67,0.4);color:#d4a843;">↩ Восстановить</button>
         <button class="btn-secondary" onclick="clearAllApps()">Очистить всё</button>
       </div>
     </div>
@@ -201,6 +202,7 @@ const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 const H={'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Content-Type':'application/json','Prefer':'return=representation'};
 
 async function sbGet(t,p=''){const r=await fetch(`${SB_URL}/rest/v1/${t}?${p}`,{headers:H});return r.ok?r.json():[];}
+async function sbRpc(fn,params={}) { const r=await fetch(`${SB_URL}/rest/v1/rpc/${fn}`,{method:'POST',headers:H,body:JSON.stringify(params)}); return r.ok?r.json():[]; }
 async function sbPatch(t,f,b){const r=await fetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'PATCH',headers:{...H,'Prefer':'return=representation'},body:JSON.stringify(b)});return r.ok?r.json():null;}
 async function sbDelete(t,f){const r=await fetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'DELETE',headers:H});return r.ok;}
 
@@ -285,7 +287,12 @@ function updateAdminStatus(){
 const TC={'РК':{bg:'rgba(192,57,43,0.12)',color:'#e07070'},'Микротест':{bg:'rgba(37,99,176,0.12)',color:'#7eb8f7'},'ДЗ':{bg:'rgba(26,122,69,0.12)',color:'#6df07a'},'Лаба':{bg:'rgba(107,63,160,0.12)',color:'#c49af5'}};
 
 function renderTable(){
-  const data=[...allApps].sort((a,b)=>a.priority!==b.priority?a.priority-b.priority:a.id-b.id);
+  const data=[...allApps].sort((a,b)=>{
+    const aRK = a.task_type==='РК' ? 0 : 1;
+    const bRK = b.task_type==='РК' ? 0 : 1;
+    if (aRK !== bRK) return aRK - bRK;
+    return a.id - b.id;
+  });
   const c=document.getElementById('tableContainer');
   document.getElementById('adminCounter').textContent=data.length;
   document.getElementById('cntRK').textContent=data.filter(e=>e.task_type==='РК').length;
@@ -296,7 +303,7 @@ function renderTable(){
   let html=`<table class="entries-table"><thead><tr><th>#</th><th>Время</th><th>Фамилия Имя</th><th>Группа</th><th>Тип</th><th>Комментарий</th><th>Статус</th><th></th></tr></thead><tbody>`;
   data.forEach((e,i)=>{
     const tc=TC[e.task_type]||{bg:'rgba(255,255,255,0.06)',color:'#aaa'};
-    const isDone=e.status==='Сдано',isAccepted=e.status==='Принято';
+    const isDone=e.status==='Сдано',isAccepted=e.status==='Принято',isArchived=e.status==='Архив';
     const dt=new Date(e.created_at).toLocaleString('ru-RU');
     html+=`<tr>
       <td style="color:var(--admin-muted);font-family:'Cormorant Garamond',serif;font-size:18px;text-align:center">${i+1}</td>
@@ -305,7 +312,7 @@ function renderTable(){
       <td>${e.grp}</td>
       <td><span class="tag" style="background:${tc.bg};color:${tc.color}">${e.task_type}</span></td>
       <td style="max-width:160px;word-break:break-word;font-size:11px;color:var(--admin-muted)">${e.comment}</td>
-      <td><span class="tag ${isDone?'tag-done-lbl':isAccepted?'tag-done':'tag-new'}">${e.status}</span></td>
+      <td><span class="tag ${isDone?'tag-done-lbl':isArchived?'tag-archived':isAccepted?'tag-done':'tag-new'}">${e.status}</span></td>
       <td class="status-toggle-cell">
         ${isDone||isAccepted?`<button class="btn-unmark" onclick="setStatus(${e.id},'Новая')">↩</button>`:`<button class="btn-mark-done" onclick="setStatus(${e.id},'Принято')">✓</button>`}
         <button class="btn-delete-row" onclick="deleteEntry(${e.id})">✕</button>
@@ -314,6 +321,10 @@ function renderTable(){
   });
   html+='</tbody></table>';
   c.innerHTML=html;
+  // Show restore button if there are archived entries
+  const hasArchived = allApps.some(e => e.status === 'Архив');
+  const btnR = document.getElementById('btnRestore');
+  if (btnR) btnR.style.display = hasArchived ? 'inline-flex' : 'none';
 }
 
 async function setStatus(id,status){await sbPatch('applications',`id=eq.${id}`,{status});await refreshData();}
@@ -321,7 +332,7 @@ async function deleteEntry(id){if(!confirm('Удалить эту заявку?'
 async function clearAllApps(){if(!confirm('Удалить все заявки?'))return;await sbDelete('applications','id=gte.0');await refreshData();toast('Все заявки удалены');}
 
 async function refreshData(){
-  const [apps,sessions]=await Promise.all([sbGet('applications','order=id.asc'),sbGet('session','id=eq.1')]);
+  const [apps,sessions]=await Promise.all([sbRpc('get_sorted_applications'),sbGet('session','id=eq.1')]);
   allApps=Array.isArray(apps)?apps:[];
   currentSession=Array.isArray(sessions)&&sessions[0]?sessions[0]:null;
   renderTable(); updateAdminStatus();
@@ -330,6 +341,22 @@ async function refreshData(){
     document.getElementById('aStartTime').value=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
     updatePreview();
   }
+}
+
+
+// ════ RESTORE ARCHIVED ════
+async function restoreArchived() {
+  if (!confirm('Восстановить архивные заявки?')) return;
+  const archived = allApps.filter(e => e.status === 'Архив');
+  await Promise.all(archived.map(e =>
+    fetch(`${SB_URL}/rest/v1/applications?id=eq.${e.id}`, {
+      method: 'PATCH',
+      headers: {...H, 'Prefer': 'return=minimal'},
+      body: JSON.stringify({ status: 'Новая' })
+    })
+  ));
+  await refreshData();
+  toast('Список восстановлен ✓');
 }
 
 function connectRealtime(){
