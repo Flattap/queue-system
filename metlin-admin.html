@@ -164,12 +164,12 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <div class="afield">
           <label>Дата и время начала *</label>
           <input type="datetime-local" id="aStartTime">
-          <div class="hint-text">Запись для студентов откроется за 1 час до этого времени. Продолжительность — 2 часа.</div>
+          <div class="hint-text">Запись для студентов откроется за 1 час до этого времени. Консультация идёт до нажатия «Отменить».</div>
         </div>
         <div class="timeline" id="previewTimeline" style="display:none;">
           <div class="timeline-row"><div class="tl-dot" style="background:#5b8df7;box-shadow:0 0 6px #5b8df7"></div><div class="tl-time" id="tlOpen">—</div><div class="tl-label">Открытие записи</div></div>
           <div class="timeline-row"><div class="tl-dot" style="background:#4fcf6e;box-shadow:0 0 6px #4fcf6e"></div><div class="tl-time" id="tlStart">—</div><div class="tl-label">Начало</div></div>
-          <div class="timeline-row"><div class="tl-dot" style="background:#f87070;box-shadow:0 0 6px #f87070"></div><div class="tl-time" id="tlEnd">—</div><div class="tl-label">Завершение (+2ч)</div></div>
+
         </div>
         <button class="btn-primary" style="margin-top:28px;" onclick="saveSession()">Сохранить расписание →</button>
         <button class="btn-danger" onclick="clearSession()">Отменить консультацию</button>
@@ -237,11 +237,10 @@ function updatePreview(){
   const val=document.getElementById('aStartTime').value;
   const tl=document.getElementById('previewTimeline');
   if(!val){tl.style.display='none';return;}
-  const start=new Date(val).getTime(),open=start-3600000,end=start+120*60000;
+  const start=new Date(val).getTime(),open=start-3600000;
   const fmt=ts=>new Date(ts).toLocaleString('ru-RU',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'});
   document.getElementById('tlOpen').textContent=fmt(open);
   document.getElementById('tlStart').textContent=fmt(start);
-  document.getElementById('tlEnd').textContent=fmt(end);
   tl.style.display='flex';
 }
 
@@ -249,7 +248,7 @@ function updatePreview(){
 async function saveSession(){
   const val=document.getElementById('aStartTime').value;
   if(!val){alert('Укажите дату и время начала.');return;}
-  const start_ts=new Date(val).getTime(),duration_ms=120*60000;
+  const start_ts=new Date(val).getTime(),duration_ms=24*60*60*1000; // 24h — effectively infinite until manually ended
   await sbPatch('session','id=eq.1',{start_ts,duration_ms,updated_at:new Date().toISOString()});
   toast('Расписание сохранено ✓');
   await refreshData();
@@ -263,8 +262,8 @@ async function clearSession(){
 
 function getSessionState(s){
   if(!s||!s.start_ts)return null;
-  const now=Date.now(),start=s.start_ts,end=start+s.duration_ms,open=start-3600000;
-  if(now<open)return'waiting';if(now<start)return'open';if(now<end)return'live';return'ended';
+  const now=Date.now(),start=s.start_ts,open=start-3600000;
+  if(now<open)return'waiting';if(now<start)return'open';return'live'; // live until manually ended
 }
 
 function updateAdminStatus(){
@@ -277,7 +276,7 @@ function updateAdminStatus(){
   let remaining=0,label='';
   if(state==='waiting'){dotEl.classList.add('dot-waiting');textEl.textContent='Ожидание';remaining=open-now;label='до открытия записи';}
   else if(state==='open'){dotEl.classList.add('dot-open');textEl.textContent='Запись открыта';remaining=start-now;label='до начала';}
-  else if(state==='live'){dotEl.classList.add('dot-live');textEl.textContent='🔴 Идёт';remaining=end-now;label='осталось';}
+  else if(state==='live'){dotEl.classList.add('dot-live');textEl.textContent='🔴 Идёт';remaining=now-start;label='продолжается';}
   else{dotEl.classList.add('dot-ended');textEl.textContent='Завершена';clockEl.textContent='—';lblEl.textContent='—';return;}
   const t=Math.max(0,Math.floor(remaining/1000)),h=Math.floor(t/3600),m=Math.floor((t%3600)/60),sec=t%60;
   clockEl.textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;

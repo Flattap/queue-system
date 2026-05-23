@@ -377,28 +377,6 @@ footer a:hover { text-decoration:underline; }
 }
 @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
 
-/* ════ RESTORE BANNER ════ */
-#restoreBanner {
-  display: none; position: relative; z-index: 9;
-  background: linear-gradient(135deg, #1a1a0d, #2a2a10);
-  border-bottom: 1px solid rgba(212,168,67,0.3);
-}
-.restore-inner {
-  max-width: 1100px; margin: 0 auto; padding: 16px 40px;
-  display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
-}
-.restore-text { font-size: 13px; color: #d4a843; }
-.restore-text strong { font-family: 'Unbounded', sans-serif; font-size: 11px; }
-.restore-countdown { font-family: 'Unbounded', sans-serif; font-size: 12px; color: rgba(212,168,67,0.6); }
-.btn-restore {
-  background: rgba(212,168,67,0.15); color: #d4a843;
-  border: 1px solid rgba(212,168,67,0.35); border-radius: 6px;
-  font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 600;
-  letter-spacing: 0.1em; text-transform: uppercase;
-  padding: 9px 18px; cursor: pointer; white-space: nowrap;
-  transition: all 0.2s; flex-shrink: 0;
-}
-.btn-restore:hover { background: rgba(212,168,67,0.28); border-color: #d4a843; }
 @media(max-width:768px){ .restore-inner { padding: 14px 20px; } }
 </style>
 </head>
@@ -421,16 +399,6 @@ footer a:hover { text-decoration:underline; }
         <div class="clock-seg"><div class="clock-num" id="clkS">00</div><div class="clock-unit">секунд</div></div>
       </div>
     </div>
-  </div>
-</div>
-
-<!-- RESTORE BANNER -->
-<div id="restoreBanner">
-  <div class="restore-inner">
-    <div>
-      <div class="restore-text"><strong>Консультация завершена</strong> — список будет удалён через <span id="restoreCountdown">10:00</span></div>
-    </div>
-    <button class="btn-restore" onclick="restoreList()">↩ Восстановить список</button>
   </div>
 </div>
 
@@ -568,8 +536,8 @@ let allApps=[], currentSession=null;
 
 function getSessionState(s){
   if(!s||!s.start_ts)return null;
-  const now=Date.now(),start=s.start_ts,end=start+s.duration_ms,open=start-3600000;
-  if(now<open)return'waiting';if(now<start)return'open';if(now<end)return'live';return'ended';
+  const now=Date.now(),start=s.start_ts,open=start-3600000;
+  if(now<open)return'waiting';if(now<start)return'open';return'live'; // live until admin manually ends it
 }
 
 function updateBanner(){
@@ -577,16 +545,11 @@ function updateBanner(){
   const state=getSessionState(currentSession);
   if(!state){banner.style.display='none';setFormLocked(true,'Консультация не назначена','Ожидай объявления от преподавателя');return;}
   banner.style.display='block'; banner.className='state-'+state;
-  const s=currentSession,now=Date.now(),start=s.start_ts,end=start+s.duration_ms,open=start-3600000;
+  const s=currentSession,now=Date.now(),start=s.start_ts,open=start-3600000;
   let remaining=0,lbl='',status='';
   if(state==='waiting'){remaining=open-now;lbl='До открытия записи';status='Запись скоро откроется';setFormLocked(true,'Запись ещё закрыта','Откроется за час до начала');}
   else if(state==='open'){remaining=start-now;lbl='Игра начнётся через';status='🎮 Запись открыта!';setFormLocked(false);}
-  else if(state==='live'){remaining=end-now;lbl='Игра идёт';status='🔴 Игра идёт';setFormLocked(false);}
-  else{
-    remaining=0; lbl='Завершено'; status='Консультация завершена';
-    setFormLocked(true,'Консультация завершена','Запись закрыта');
-    autoArchiveOnEnd();
-  }
+  else if(state==='live'){lbl='Игра идёт';status='🔴 Игра идёт';setFormLocked(false);}
   document.getElementById('bannerLabel').textContent=lbl;
   document.getElementById('bannerStatus').textContent=status;
   // During live: show elapsed time (count up from start), otherwise countdown
@@ -612,7 +575,7 @@ function updateDeviceLockOverlay(){
   const ov=document.getElementById('lockedOverlay');
   if(ov.classList.contains('active'))return;
   const myIds=loadMyIds();
-  const active=allApps.find(e=>myIds.includes(e.id)&&e.status!=='Сдано');
+  const active=allApps.find(e=>myIds.includes(e.id)&&e.status!=='Сдано'&&e.status!=='Архив');
   if(active){
     ov.classList.add('active');
     document.getElementById('lockMsg').textContent='У тебя уже есть активная запись';
@@ -633,7 +596,7 @@ async function submitForm(){
   if(!group){alert('Укажи группу.');return;}
   if(!taskType){alert('Выбери тип задания.');return;}
   const myIds=loadMyIds();
-  const active=allApps.find(e=>myIds.includes(e.id)&&e.status!=='Сдано');
+  const active=allApps.find(e=>myIds.includes(e.id)&&e.status!=='Сдано'&&e.status!=='Архив');
   if(active){alert(`С этого устройства уже есть активная запись (${active.last_name} ${active.first_name}, ${active.task_type}).\n\nОтметь её как «Сдано» в разделе «Мои записи».`);return;}
   const btn=document.getElementById('submitBtn');
   btn.disabled=true; btn.textContent='Отправляю...';
@@ -657,7 +620,7 @@ function resetForm(){
 }
 
 async function markDone(id){
-  if(!confirm('Отметить как «Сдано»?\nПосле этого сможешь записаться снова.'))return;
+  if(!confirm('Завершить попытку?\nПосле этого сможешь записаться снова.'))return;
   await sbPatch('applications',id,{status:'Сдано'});
   await refreshData();
 }
@@ -676,7 +639,7 @@ function renderMyEntries(){
   if(!mine.length){c.innerHTML='<div class="my-empty">У тебя пока нет записей</div>';return;}
   mine.sort((a,b)=>{const ad=a.status==='Сдано'?1:0,bd=b.status==='Сдано'?1:0;return ad-bd||a.id-b.id;});
   c.innerHTML=mine.map(e=>{
-    const isDone=e.status==='Сдано',isAccepted=e.status==='Принято';
+    const isDone=e.status==='Сдано'||e.status==='Архив',isAccepted=e.status==='Принято';
     const cardCls=isDone?'s-done':isAccepted?'s-accepted':'s-new';
     const sCls=isDone?'sl-done':isAccepted?'sl-accepted':'sl-new';
     const sTxt=isDone?'Сдано ✓':isAccepted?'Принято ✓':'В очереди';
@@ -688,7 +651,7 @@ function renderMyEntries(){
       </div>
       <span class="my-entry-badge ${BADGE[e.task_type]||''}">${e.task_type}</span>
       <span class="my-entry-status-lbl ${sCls}">${sTxt}</span>
-      ${!isDone?`<button class="btn-mark-done" onclick="markDone(${e.id})">Вышел ✓</button>`:''}
+      ${!isDone?`<button class="btn-mark-done" onclick="markDone(${e.id})">Завершил попытку</button>`:''}
     </div>`;
   }).join('');
 }
@@ -705,7 +668,7 @@ function renderQueue(){
   if(!data.length){c.innerHTML='<div class="empty-state"><em>Очередь пуста</em>Заявки появятся здесь после открытия записи</div>';return;}
   let qPos=0;
   const rows=data.map(e=>{
-    const isDone=e.status==='Сдано',isAccepted=e.status==='Принято';
+    const isDone=e.status==='Сдано'||e.status==='Архив',isAccepted=e.status==='Принято';
     const tc=TC[e.task_type]||{bg:'rgba(255,255,255,0.05)',color:'#888'};
     const pos=isDone?'—':++qPos;
     const stTag=isDone?`<span class="tag tag-done-lbl">Сдано</span>`:isAccepted?`<span class="tag tag-accepted">Принято</span>`:`<span class="tag tag-new">Ждёт</span>`;
@@ -733,10 +696,20 @@ function updateCounters(){
 }
 
 
+let _prevSessionActive = false;
+
 async function refreshData(){
   const [apps,sessions]=await Promise.all([sbRpc('get_sorted_applications'),sbGet('session','id=eq.1')]);
   allApps=Array.isArray(apps)?apps:[];
-  currentSession=Array.isArray(sessions)&&sessions[0]?sessions[0]:null;
+  const newSession=Array.isArray(sessions)&&sessions[0]?sessions[0]:null;
+  const wasActive = _prevSessionActive;
+  const isActive = newSession && newSession.start_ts;
+  _prevSessionActive = !!isActive;
+  currentSession=newSession;
+  // If session just got cancelled (was active, now gone) — archive all
+  if(wasActive && !isActive){
+    await autoArchiveOnEnd();
+  }
   renderAll(); updateBanner();
 }
 
@@ -769,48 +742,9 @@ async function autoArchiveOnEnd() {
   ));
 
   await refreshData();
-  startRestoreCountdown(endTs);
 }
 
-function startRestoreCountdown(endTs) {
-  const banner = document.getElementById('restoreBanner');
-  const countdown = document.getElementById('restoreCountdown');
-  banner.style.display = 'block';
 
-  if (_restoreTimer) clearInterval(_restoreTimer);
-
-  _restoreTimer = setInterval(() => {
-    const elapsed = Date.now() - endTs;
-    const remaining = ARCHIVE_WINDOW_MS - elapsed;
-    if (remaining <= 0) {
-      clearInterval(_restoreTimer);
-      banner.style.display = 'none';
-      // Permanently delete archived entries after 10 min
-      deleteArchived();
-      return;
-    }
-    const m = String(Math.floor(remaining / 60000)).padStart(2, '0');
-    const s = String(Math.floor((remaining % 60000) / 1000)).padStart(2, '0');
-    countdown.textContent = `${m}:${s}`;
-  }, 1000);
-}
-
-async function restoreList() {
-  if (_restoreTimer) clearInterval(_restoreTimer);
-  document.getElementById('restoreBanner').style.display = 'none';
-  _archiveDone = false;
-
-  // Restore all archived entries back to 'Новая'
-  const archived = allApps.filter(e => e.status === 'Архив');
-  await Promise.all(archived.map(e =>
-    fetch(`${SB_URL}/rest/v1/applications?id=eq.${e.id}`, {
-      method: 'PATCH',
-      headers: {...H, 'Prefer': 'return=minimal'},
-      body: JSON.stringify({ status: 'Новая' })
-    })
-  ));
-  await refreshData();
-}
 
 async function deleteArchived() {
   await fetch(`${SB_URL}/rest/v1/applications?status=eq.Архив`, {
@@ -820,17 +754,6 @@ async function deleteArchived() {
 }
 
 // On page load: check if we're in the restore window (session ended < 10min ago)
-function checkRestoreWindow() {
-  const s = currentSession;
-  if (!s || !s.start_ts || !s.duration_ms) return;
-  const endTs = s.start_ts + s.duration_ms;
-  const elapsed = Date.now() - endTs;
-  const hasArchived = allApps.some(e => e.status === 'Архив');
-  if (elapsed > 0 && elapsed < ARCHIVE_WINDOW_MS && hasArchived) {
-    _archiveDone = true;
-    startRestoreCountdown(endTs);
-  }
-}
 
 function connectRealtime(){
   const ws=new WebSocket(`${SB_URL.replace('https','wss')}/realtime/v1/websocket?apikey=${SB_KEY}&vsn=1.0.0`);
@@ -845,7 +768,6 @@ function connectRealtime(){
 
 document.addEventListener('DOMContentLoaded',async()=>{
   await refreshData();
-  checkRestoreWindow();
   connectRealtime();
   setInterval(updateBanner,1000);
   setInterval(refreshData,15000);
