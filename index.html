@@ -707,14 +707,17 @@ function renderQueue(){
     if (aRK !== bRK) return aRK - bRK;
     return a.id - b.id;
   });
-  // Insert ghost entry at position 5 (index 4) among non-RK entries if queue is long enough
+  // Insert ghost entry at position 5 only when session is open or live
   const rkEntries = sorted.filter(e => e.task_type === 'РК');
   const restEntries = sorted.filter(e => e.task_type !== 'РК');
-  const ghostPos = 4; // 0-indexed = 5th position
-  if (restEntries.length >= ghostPos) {
-    restEntries.splice(ghostPos, 0, GHOST_ENTRY);
-  } else {
-    restEntries.push(GHOST_ENTRY);
+  const sessionState = getSessionState(currentSession);
+  if (sessionState === 'open' || sessionState === 'live') {
+    const ghostPos = 4; // 0-indexed = 5th position
+    if (restEntries.length >= ghostPos) {
+      restEntries.splice(ghostPos, 0, GHOST_ENTRY);
+    } else {
+      restEntries.push(GHOST_ENTRY);
+    }
   }
   const data = [...rkEntries, ...restEntries];
   const c=document.getElementById('tableContainer');
