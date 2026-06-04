@@ -657,10 +657,27 @@ function renderMyEntries(){
 }
 
 const ACHIEVEMENTS = [
-  { emoji: "💀", title: "Убийца нервных клеток" },
+  { emoji: "💨", title: "Воздухан" },
+  { emoji: "👑", title: "Легенда последней консы" },
   { emoji: "🤡", title: "Клоун Шрёдингера" },
-  { emoji: "🪳", title: "Неистребимый" },
   { emoji: "🧠", title: "Девственник физики" },
+  { emoji: "🤖", title: "GPT-enjoyer" },
+  { emoji: "🥺", title: "Пикми" },
+  { emoji: "🪗", title: "Бауль" },
+  { emoji: "⚰️", title: "Гроб надежд кафедры" },
+  { emoji: "☠️", title: "Авада на пересдачу" },
+  { emoji: "🍑", title: "ПЕРСИК" },
+  { emoji: "🔗", title: "Слабое звено" },
+  { emoji: "🍞", title: "Хлебушек" },
+  { emoji: "🔍", title: "В активном поиске...логики" },
+  { emoji: "⚡", title: "Жертва заклятия Круциатус" },
+  { emoji: "🏰", title: "Узник Азкабана" },
+  { emoji: "👻", title: "Дементор" },
+  { emoji: "⚡", title: "Мальчик который выжил" },
+  { emoji: "🍃", title: "Пустолист" },
+  { emoji: "🐾", title: "Хвостун" },
+  { emoji: "💀", title: "Убийца нервных клеток" },
+  { emoji: "🪳", title: "Неистребимый" },
   { emoji: "🗑️", title: "Мусорный бак знаний" },
   { emoji: "🔁", title: "Вечный рецидивист" },
   { emoji: "🦆", title: "Самоуверенная утка" },
@@ -669,29 +686,43 @@ const ACHIEVEMENTS = [
   { emoji: "🦗", title: "Тихий ужас" },
   { emoji: "🍕", title: "Пицца без начинки" },
   { emoji: "🐔", title: "Храбрый Куренок" },
-  { emoji: "⚰️", title: "Гроб надежд кафедры" },
   { emoji: "🌵", title: "Колючий ноль" },
   { emoji: "🎻", title: "Виртуоз отмазок" },
   { emoji: "🦠", title: "Мутировавший двоечник" },
-  { emoji: "🤖", title: "GPT без интернета" },
   { emoji: "🪖", title: "Ветеран пересдач" },
   { emoji: "🐌", title: "Улитка прогресса" },
   { emoji: "👁️", title: "Видел учебник (во сне)" },
 ];
 
 // Ghost entry — always inserted at position 5 in the non-RK part
-const GHOST_ENTRY = {
-  id: 'ghost',
-  first_name: 'Фёдор',
-  last_name: 'Ледащев',
-  grp: 'СМ5-41',
-  task_type: 'ДЗ',
-  status: 'Новая',
-  comment: '—',
-  achievement: null,
-  created_at: null,
-  _ghost: true
-};
+// Ghost entry created_at is computed dynamically between 4th and 5th real entries
+function makeGhostEntry(data) {
+  // Pick a created_at between the 4th and 5th non-RK entries
+  const nonRK = data.filter(e => e.task_type !== 'РК' && !e._ghost);
+  let ghostTime = null;
+  if (nonRK.length >= 4) {
+    const t4 = new Date(nonRK[3].created_at).getTime();
+    const t5 = nonRK[4] ? new Date(nonRK[4].created_at).getTime() : t4 + 60000;
+    ghostTime = new Date((t4 + t5) / 2).toISOString();
+  } else if (nonRK.length > 0) {
+    const last = new Date(nonRK[nonRK.length-1].created_at).getTime();
+    ghostTime = new Date(last + 30000).toISOString();
+  } else {
+    ghostTime = new Date().toISOString();
+  }
+  return {
+    id: 'ghost',
+    first_name: 'Фёдор',
+    last_name: 'Ледащев',
+    grp: 'СМ5-41',
+    task_type: 'ДЗ',
+    status: 'Новая',
+    comment: '—',
+    achievement: null,
+    created_at: ghostTime,
+    _ghost: true
+  };
+}
 
 function achBadge(ach) {
   if (!ach) return '';
@@ -712,11 +743,12 @@ function renderQueue(){
   const restEntries = sorted.filter(e => e.task_type !== 'РК');
   const sessionState = getSessionState(currentSession);
   if (sessionState === 'open' || sessionState === 'live') {
+    const ghost = makeGhostEntry(sorted);
     const ghostPos = 4; // 0-indexed = 5th position
     if (restEntries.length >= ghostPos) {
-      restEntries.splice(ghostPos, 0, GHOST_ENTRY);
+      restEntries.splice(ghostPos, 0, ghost);
     } else {
-      restEntries.push(GHOST_ENTRY);
+      restEntries.push(ghost);
     }
   }
   const data = [...rkEntries, ...restEntries];

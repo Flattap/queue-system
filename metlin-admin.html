@@ -286,10 +286,27 @@ function updateAdminStatus(){
 const TC={'РК':{bg:'rgba(192,57,43,0.12)',color:'#e07070'},'Микротест':{bg:'rgba(37,99,176,0.12)',color:'#7eb8f7'},'ДЗ':{bg:'rgba(26,122,69,0.12)',color:'#6df07a'},'Лаба':{bg:'rgba(107,63,160,0.12)',color:'#c49af5'}};
 
 const ACHIEVEMENTS = [
-  { emoji: "💀", title: "Убийца нервных клеток" },
+  { emoji: "💨", title: "Воздухан" },
+  { emoji: "👑", title: "Легенда последней консы" },
   { emoji: "🤡", title: "Клоун Шрёдингера" },
-  { emoji: "🪳", title: "Неистребимый" },
   { emoji: "🧠", title: "Девственник физики" },
+  { emoji: "🤖", title: "GPT-enjoyer" },
+  { emoji: "🥺", title: "Пикми" },
+  { emoji: "🪗", title: "Бауль" },
+  { emoji: "⚰️", title: "Гроб надежд кафедры" },
+  { emoji: "☠️", title: "Авада на пересдачу" },
+  { emoji: "🍑", title: "ПЕРСИК" },
+  { emoji: "🔗", title: "Слабое звено" },
+  { emoji: "🍞", title: "Хлебушек" },
+  { emoji: "🔍", title: "В активном поиске...логики" },
+  { emoji: "⚡", title: "Жертва заклятия Круциатус" },
+  { emoji: "🏰", title: "Узник Азкабана" },
+  { emoji: "👻", title: "Дементор" },
+  { emoji: "⚡", title: "Мальчик который выжил" },
+  { emoji: "🍃", title: "Пустолист" },
+  { emoji: "🐾", title: "Хвостун" },
+  { emoji: "💀", title: "Убийца нервных клеток" },
+  { emoji: "🪳", title: "Неистребимый" },
   { emoji: "🗑️", title: "Мусорный бак знаний" },
   { emoji: "🔁", title: "Вечный рецидивист" },
   { emoji: "🦆", title: "Самоуверенная утка" },
@@ -298,11 +315,9 @@ const ACHIEVEMENTS = [
   { emoji: "🦗", title: "Тихий ужас" },
   { emoji: "🍕", title: "Пицца без начинки" },
   { emoji: "🐔", title: "Храбрый Куренок" },
-  { emoji: "⚰️", title: "Гроб надежд кафедры" },
   { emoji: "🌵", title: "Колючий ноль" },
   { emoji: "🎻", title: "Виртуоз отмазок" },
   { emoji: "🦠", title: "Мутировавший двоечник" },
-  { emoji: "🤖", title: "GPT без интернета" },
   { emoji: "🪖", title: "Ветеран пересдач" },
   { emoji: "🐌", title: "Улитка прогресса" },
   { emoji: "👁️", title: "Видел учебник (во сне)" },
@@ -325,12 +340,23 @@ function achSelect(id, current) {
 }
 
 function renderTable(){
-  const data=[...allApps].sort((a,b)=>{
+  const sorted=[...allApps].sort((a,b)=>{
     const aRK = a.task_type==='РК' ? 0 : 1;
     const bRK = b.task_type==='РК' ? 0 : 1;
     if (aRK !== bRK) return aRK - bRK;
     return a.id - b.id;
   });
+  // Inject ghost entry when session is open/live
+  const rkA = sorted.filter(e => e.task_type === 'РК');
+  const restA = sorted.filter(e => e.task_type !== 'РК');
+  const adminState = getSessionState(currentSession);
+  if (adminState === 'open' || adminState === 'live') {
+    const ghost = makeGhostEntry(sorted);
+    const gPos = 4;
+    if (restA.length >= gPos) restA.splice(gPos, 0, ghost);
+    else restA.push(ghost);
+  }
+  const data = [...rkA, ...restA];
   const c=document.getElementById('tableContainer');
   document.getElementById('adminCounter').textContent=data.length;
   document.getElementById('cntRK').textContent=data.filter(e=>e.task_type==='РК').length;
@@ -341,7 +367,7 @@ function renderTable(){
   let html=`<table class="entries-table"><thead><tr><th>#</th><th>Время</th><th>Фамилия Имя</th><th>Группа</th><th>Тип</th><th>Комментарий</th><th>Ачивка</th><th>Статус</th><th></th></tr></thead><tbody>`;
   data.forEach((e,i)=>{
     const tc=TC[e.task_type]||{bg:'rgba(255,255,255,0.06)',color:'#aaa'};
-    const isDone=e.status==='Сдано',isAccepted=e.status==='Принято',isArchived=e.status==='Архив';
+    const isDone=e.status==='Сдано'||e.status==='Архив',isAccepted=e.status==='Принято',isArchived=e.status==='Архив';
     const dt=new Date(e.created_at).toLocaleString('ru-RU');
     html+=`<tr>
       <td style="color:var(--admin-muted);font-family:'Cormorant Garamond',serif;font-size:18px;text-align:center">${i+1}</td>
@@ -350,11 +376,11 @@ function renderTable(){
       <td>${e.grp}</td>
       <td><span class="tag" style="background:${tc.bg};color:${tc.color}">${e.task_type}</span></td>
       <td style="max-width:160px;word-break:break-word;font-size:11px;color:var(--admin-muted)">${e.comment}</td>
-      <td>${achSelect(e.id, e.achievement||'')}</td>
+      <td>${e._ghost ? '' : achSelect(e.id, e.achievement||'')}</td>
       <td><span class="tag ${isDone?'tag-done-lbl':isArchived?'tag-archived':isAccepted?'tag-done':'tag-new'}">${e.status}</span></td>
       <td class="status-toggle-cell">
-        ${isDone||isAccepted?`<button class="btn-unmark" onclick="setStatus(${e.id},'Новая')">↩</button>`:`<button class="btn-mark-done" onclick="setStatus(${e.id},'Принято')">✓</button>`}
-        <button class="btn-delete-row" onclick="deleteEntry(${e.id})">✕</button>
+        ${e._ghost ? '' : isDone||isAccepted?`<button class="btn-unmark" onclick="setStatus(${e.id},'Новая')">↩</button>`:`<button class="btn-mark-done" onclick="setStatus(${e.id},'Принято')">✓</button>`}
+        ${e._ghost ? '' : `<button class="btn-delete-row" onclick="deleteEntry(${e.id})">✕</button>`}
       </td>
     </tr>`;
   });
