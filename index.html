@@ -656,27 +656,82 @@ function renderMyEntries(){
   }).join('');
 }
 
+const ACHIEVEMENTS = [
+  { emoji: "💀", title: "Убийца нервных клеток" },
+  { emoji: "🤡", title: "Клоун Шрёдингера" },
+  { emoji: "🪳", title: "Неистребимый" },
+  { emoji: "🧠", title: "Девственник физики" },
+  { emoji: "🗑️", title: "Мусорный бак знаний" },
+  { emoji: "🔁", title: "Вечный рецидивист" },
+  { emoji: "🦆", title: "Самоуверенная утка" },
+  { emoji: "🧻", title: "Одноразовый студент" },
+  { emoji: "🎯", title: "Мимо кассы" },
+  { emoji: "🦗", title: "Тихий ужас" },
+  { emoji: "🍕", title: "Пицца без начинки" },
+  { emoji: "🐔", title: "Храбрый Куренок" },
+  { emoji: "⚰️", title: "Гроб надежд кафедры" },
+  { emoji: "🌵", title: "Колючий ноль" },
+  { emoji: "🎻", title: "Виртуоз отмазок" },
+  { emoji: "🦠", title: "Мутировавший двоечник" },
+  { emoji: "🤖", title: "GPT без интернета" },
+  { emoji: "🪖", title: "Ветеран пересдач" },
+  { emoji: "🐌", title: "Улитка прогресса" },
+  { emoji: "👁️", title: "Видел учебник (во сне)" },
+];
+
+// Ghost entry — always inserted at position 5 in the non-RK part
+const GHOST_ENTRY = {
+  id: 'ghost',
+  first_name: 'Фёдор',
+  last_name: 'Ледащев',
+  grp: 'СМ5-41',
+  task_type: 'ДЗ',
+  status: 'Новая',
+  comment: '—',
+  achievement: null,
+  created_at: null,
+  _ghost: true
+};
+
+function achBadge(ach) {
+  if (!ach) return '';
+  const found = ACHIEVEMENTS.find(a => a.title === ach);
+  const emoji = found ? found.emoji : '🏅';
+  return `<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(212,168,67,0.12);border:1px solid rgba(212,168,67,0.25);border-radius:10px;padding:2px 8px;font-size:10px;color:#d4a843;font-weight:600;margin-left:6px;white-space:nowrap;">${emoji} ${ach}</span>`;
+}
+
 function renderQueue(){
-  const data=[...allApps].filter(e=>e.status!=='Архив').sort((a,b)=>{
+  const sorted=[...allApps].filter(e=>e.status!=='Архив').sort((a,b)=>{
     const aRK = a.task_type==='РК' ? 0 : 1;
     const bRK = b.task_type==='РК' ? 0 : 1;
-    if (aRK !== bRK) return aRK - bRK; // РК first
-    return a.id - b.id; // then strictly by registration time
+    if (aRK !== bRK) return aRK - bRK;
+    return a.id - b.id;
   });
+  // Insert ghost entry at position 5 (index 4) among non-RK entries if queue is long enough
+  const rkEntries = sorted.filter(e => e.task_type === 'РК');
+  const restEntries = sorted.filter(e => e.task_type !== 'РК');
+  const ghostPos = 4; // 0-indexed = 5th position
+  if (restEntries.length >= ghostPos) {
+    restEntries.splice(ghostPos, 0, GHOST_ENTRY);
+  } else {
+    restEntries.push(GHOST_ENTRY);
+  }
+  const data = [...rkEntries, ...restEntries];
   const c=document.getElementById('tableContainer');
   document.getElementById('counterNum').textContent=data.filter(e=>e.status!=='Сдано'&&e.status!=='Архив').length;
   if(!data.length){c.innerHTML='<div class="empty-state"><em>Очередь пуста</em>Заявки появятся здесь после открытия записи</div>';return;}
   let qPos=0;
   const rows=data.map(e=>{
-    const isDone=e.status==='Сдано'||e.status==='Архив',isAccepted=e.status==='Принято';
+    const isDone=(e.status==='Сдано'||e.status==='Архив'),isAccepted=e.status==='Принято';
     const tc=TC[e.task_type]||{bg:'rgba(255,255,255,0.05)',color:'#888'};
     const pos=isDone?'—':++qPos;
     const stTag=isDone?`<span class="tag tag-done-lbl">Сдано</span>`:isAccepted?`<span class="tag tag-accepted">Принято</span>`:`<span class="tag tag-new">Ждёт</span>`;
-    const dt=new Date(e.created_at).toLocaleString('ru-RU');
+    const dt=e._ghost?'—':new Date(e.created_at).toLocaleString('ru-RU');
+    const ach=achBadge(e.achievement);
     return `<tr style="${isDone?'opacity:0.35':''}">
       <td style="font-family:'Unbounded',sans-serif;font-size:16px;font-weight:700;color:var(--lime);text-align:center;padding:11px 8px">${pos}</td>
       <td style="font-size:10px;color:var(--muted)">${dt}</td>
-      <td style="font-weight:600;color:var(--chalk)">${e.last_name} ${e.first_name}</td>
+      <td style="font-weight:600;color:var(--chalk)">${e.last_name} ${e.first_name}${ach}</td>
       <td>${e.grp}</td>
       <td><span class="tag" style="background:${tc.bg};color:${tc.color}">${e.task_type}</span></td>
       <td>${stTag}</td>

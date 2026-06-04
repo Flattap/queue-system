@@ -285,6 +285,45 @@ function updateAdminStatus(){
 
 const TC={'РК':{bg:'rgba(192,57,43,0.12)',color:'#e07070'},'Микротест':{bg:'rgba(37,99,176,0.12)',color:'#7eb8f7'},'ДЗ':{bg:'rgba(26,122,69,0.12)',color:'#6df07a'},'Лаба':{bg:'rgba(107,63,160,0.12)',color:'#c49af5'}};
 
+const ACHIEVEMENTS = [
+  { emoji: "💀", title: "Убийца нервных клеток" },
+  { emoji: "🤡", title: "Клоун Шрёдингера" },
+  { emoji: "🪳", title: "Неистребимый" },
+  { emoji: "🧠", title: "Девственник физики" },
+  { emoji: "🗑️", title: "Мусорный бак знаний" },
+  { emoji: "🔁", title: "Вечный рецидивист" },
+  { emoji: "🦆", title: "Самоуверенная утка" },
+  { emoji: "🧻", title: "Одноразовый студент" },
+  { emoji: "🎯", title: "Мимо кассы" },
+  { emoji: "🦗", title: "Тихий ужас" },
+  { emoji: "🍕", title: "Пицца без начинки" },
+  { emoji: "🐔", title: "Храбрый Куренок" },
+  { emoji: "⚰️", title: "Гроб надежд кафедры" },
+  { emoji: "🌵", title: "Колючий ноль" },
+  { emoji: "🎻", title: "Виртуоз отмазок" },
+  { emoji: "🦠", title: "Мутировавший двоечник" },
+  { emoji: "🤖", title: "GPT без интернета" },
+  { emoji: "🪖", title: "Ветеран пересдач" },
+  { emoji: "🐌", title: "Улитка прогресса" },
+  { emoji: "👁️", title: "Видел учебник (во сне)" },
+];
+
+async function setAchievement(id, val) {
+  await sbPatch('applications', `id=eq.${id}`, { achievement: val || null });
+  await refreshData();
+  toast(val ? `Ачивка выдана: ${val}` : 'Ачивка снята');
+}
+
+function achSelect(id, current) {
+  const options = ACHIEVEMENTS.map(a =>
+    `<option value="${a.emoji} ${a.title}" ${current === a.emoji+' '+a.title ? 'selected' : ''}>${a.emoji} ${a.title}</option>`
+  ).join('');
+  return `<select onchange="setAchievement(${id}, this.value)" style="background:var(--admin-card);color:var(--admin-text);border:1px solid var(--admin-border);border-radius:4px;padding:3px 6px;font-size:10px;cursor:pointer;max-width:160px;">
+    <option value="">— ачивка —</option>
+    ${options}
+  </select>`;
+}
+
 function renderTable(){
   const data=[...allApps].sort((a,b)=>{
     const aRK = a.task_type==='РК' ? 0 : 1;
@@ -299,7 +338,7 @@ function renderTable(){
   document.getElementById('cntDZ').textContent=data.filter(e=>e.task_type==='ДЗ').length;
   document.getElementById('cntLaba').textContent=data.filter(e=>e.task_type==='Лаба').length;
   if(!data.length){c.innerHTML='<div class="empty-state"><em>нет заявок</em>Студенческие заявки появятся здесь</div>';return;}
-  let html=`<table class="entries-table"><thead><tr><th>#</th><th>Время</th><th>Фамилия Имя</th><th>Группа</th><th>Тип</th><th>Комментарий</th><th>Статус</th><th></th></tr></thead><tbody>`;
+  let html=`<table class="entries-table"><thead><tr><th>#</th><th>Время</th><th>Фамилия Имя</th><th>Группа</th><th>Тип</th><th>Комментарий</th><th>Ачивка</th><th>Статус</th><th></th></tr></thead><tbody>`;
   data.forEach((e,i)=>{
     const tc=TC[e.task_type]||{bg:'rgba(255,255,255,0.06)',color:'#aaa'};
     const isDone=e.status==='Сдано',isAccepted=e.status==='Принято',isArchived=e.status==='Архив';
@@ -307,10 +346,11 @@ function renderTable(){
     html+=`<tr>
       <td style="color:var(--admin-muted);font-family:'Cormorant Garamond',serif;font-size:18px;text-align:center">${i+1}</td>
       <td style="font-size:11px;color:var(--admin-muted)">${dt}</td>
-      <td><strong style="color:white">${e.last_name} ${e.first_name}</strong></td>
+      <td><strong style="color:white">${e.last_name} ${e.first_name}</strong>${e.achievement?`<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(212,168,67,0.12);border:1px solid rgba(212,168,67,0.25);border-radius:8px;padding:1px 7px;font-size:10px;color:#d4a843;font-weight:600;margin-left:6px;">${e.achievement}</span>`:''}</td>
       <td>${e.grp}</td>
       <td><span class="tag" style="background:${tc.bg};color:${tc.color}">${e.task_type}</span></td>
       <td style="max-width:160px;word-break:break-word;font-size:11px;color:var(--admin-muted)">${e.comment}</td>
+      <td>${achSelect(e.id, e.achievement||'')}</td>
       <td><span class="tag ${isDone?'tag-done-lbl':isArchived?'tag-archived':isAccepted?'tag-done':'tag-new'}">${e.status}</span></td>
       <td class="status-toggle-cell">
         ${isDone||isAccepted?`<button class="btn-unmark" onclick="setStatus(${e.id},'Новая')">↩</button>`:`<button class="btn-mark-done" onclick="setStatus(${e.id},'Принято')">✓</button>`}
