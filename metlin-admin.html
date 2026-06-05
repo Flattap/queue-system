@@ -339,6 +339,31 @@ function achSelect(id, current) {
   </select>`;
 }
 
+function makeGhostEntry() {
+  // Ghost time = exactly session start + 6 seconds
+  const start = currentSession && currentSession.start_ts ? currentSession.start_ts : Date.now();
+  const ghostTime = new Date(start + 6000).toISOString();
+  return {
+    id: 'ghost',
+    first_name: 'Фёдор',
+    last_name: 'Ледащев',
+    grp: 'СМ5-41',
+    task_type: 'ДЗ',
+    status: 'Новая',
+    comment: '—',
+    achievement: localStorage.getItem('metlin_ghost_ach') || null,
+    created_at: ghostTime,
+    _ghost: true
+  };
+}
+
+
+function setGhostAchievement(val) {
+  localStorage.setItem('metlin_ghost_ach', val || '');
+  renderTable();
+  toast(val ? `Ачивка Ледащеву: ${val}` : 'Ачивка Ледащеву снята');
+}
+
 function renderTable(){
   const sorted=[...allApps].sort((a,b)=>{
     const aRK = a.task_type==='РК' ? 0 : 1;
@@ -351,7 +376,7 @@ function renderTable(){
   const restA = sorted.filter(e => e.task_type !== 'РК');
   const adminState = getSessionState(currentSession);
   if (adminState === 'open' || adminState === 'live') {
-    const ghost = makeGhostEntry(sorted);
+    const ghost = makeGhostEntry();
     const gPos = 4;
     if (restA.length >= gPos) restA.splice(gPos, 0, ghost);
     else restA.push(ghost);
@@ -372,11 +397,16 @@ function renderTable(){
     html+=`<tr>
       <td style="color:var(--admin-muted);font-family:'Cormorant Garamond',serif;font-size:18px;text-align:center">${i+1}</td>
       <td style="font-size:11px;color:var(--admin-muted)">${dt}</td>
-      <td><strong style="color:white">${e.last_name} ${e.first_name}</strong>${e.achievement?`<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(212,168,67,0.12);border:1px solid rgba(212,168,67,0.25);border-radius:8px;padding:1px 7px;font-size:10px;color:#d4a843;font-weight:600;margin-left:6px;">${e.achievement}</span>`:''}</td>
+      <td><strong style="color:white">${e.last_name} ${e.first_name}</strong>${(()=>{const a=e._ghost?localStorage.getItem('metlin_ghost_ach')||'':e.achievement||'';return a?`<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(212,168,67,0.12);border:1px solid rgba(212,168,67,0.25);border-radius:8px;padding:1px 7px;font-size:10px;color:#d4a843;font-weight:600;margin-left:6px;">${a}</span>`:'';})()}</td>
       <td>${e.grp}</td>
       <td><span class="tag" style="background:${tc.bg};color:${tc.color}">${e.task_type}</span></td>
       <td style="max-width:160px;word-break:break-word;font-size:11px;color:var(--admin-muted)">${e.comment}</td>
-      <td>${e._ghost ? '' : achSelect(e.id, e.achievement||'')}</td>
+      <td>${e._ghost
+        ? `<select onchange="setGhostAchievement(this.value)" style="background:var(--admin-card);color:var(--admin-text);border:1px solid var(--admin-border);border-radius:4px;padding:3px 6px;font-size:10px;cursor:pointer;max-width:160px;">
+            <option value="">— ачивка —</option>
+            ${ACHIEVEMENTS.map(a=>`<option value="${a.emoji} ${a.title}" ${(localStorage.getItem('metlin_ghost_ach')||'')===(a.emoji+' '+a.title)?'selected':''  }>${a.emoji} ${a.title}</option>`).join('')}
+           </select>`
+        : achSelect(e.id, e.achievement||'')}</td>
       <td><span class="tag ${isDone?'tag-done-lbl':isArchived?'tag-archived':isAccepted?'tag-done':'tag-new'}">${e.status}</span></td>
       <td class="status-toggle-cell">
         ${e._ghost ? '' : isDone||isAccepted?`<button class="btn-unmark" onclick="setStatus(${e.id},'Новая')">↩</button>`:`<button class="btn-mark-done" onclick="setStatus(${e.id},'Принято')">✓</button>`}
@@ -438,13 +468,21 @@ function connectRealtime(){
 document.addEventListener('DOMContentLoaded',async()=>{
   if(!isAuthenticated())showPasswordScreen();
   document.getElementById('aStartTime').addEventListener('input',updatePreview);
-  const now=new Date();now.setMinutes(0,0,0);now.setHours(now.getHours()+2);
-  const pad=n=>String(n).padStart(2,'0');
-  document.getElementById('aStartTime').value=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:00`;
-  updatePreview();
+
+  // Load data first — refreshData will restore saved session into the form
   await refreshData();
+
+  // Only set default datetime if no session is saved in DB
+  if(!currentSession || !currentSession.start_ts){
+    const now=new Date();now.setMinutes(0,0,0);now.setHours(now.getHours()+2);
+    const pad=n=>String(n).padStart(2,'0');
+    document.getElementById('aStartTime').value=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:00`;
+    updatePreview();
+  }
+
   connectRealtime();
   updateTopbarTime();
+  updateAdminStatus(); // call immediately so status shows without delay
   setInterval(updateAdminStatus,1000);
   setInterval(updateTopbarTime,1000);
   setInterval(refreshData,15000);

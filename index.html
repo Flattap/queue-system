@@ -696,20 +696,10 @@ const ACHIEVEMENTS = [
 
 // Ghost entry — always inserted at position 5 in the non-RK part
 // Ghost entry created_at is computed dynamically between 4th and 5th real entries
-function makeGhostEntry(data) {
-  // Pick a created_at between the 4th and 5th non-RK entries
-  const nonRK = data.filter(e => e.task_type !== 'РК' && !e._ghost);
-  let ghostTime = null;
-  if (nonRK.length >= 4) {
-    const t4 = new Date(nonRK[3].created_at).getTime();
-    const t5 = nonRK[4] ? new Date(nonRK[4].created_at).getTime() : t4 + 60000;
-    ghostTime = new Date((t4 + t5) / 2).toISOString();
-  } else if (nonRK.length > 0) {
-    const last = new Date(nonRK[nonRK.length-1].created_at).getTime();
-    ghostTime = new Date(last + 30000).toISOString();
-  } else {
-    ghostTime = new Date().toISOString();
-  }
+function makeGhostEntry() {
+  // Ghost time = exactly session start + 6 seconds
+  const start = currentSession && currentSession.start_ts ? currentSession.start_ts : Date.now();
+  const ghostTime = new Date(start + 6000).toISOString();
   return {
     id: 'ghost',
     first_name: 'Фёдор',
@@ -718,7 +708,7 @@ function makeGhostEntry(data) {
     task_type: 'ДЗ',
     status: 'Новая',
     comment: '—',
-    achievement: null,
+    achievement: localStorage.getItem('metlin_ghost_ach') || null,
     created_at: ghostTime,
     _ghost: true
   };
@@ -743,7 +733,7 @@ function renderQueue(){
   const restEntries = sorted.filter(e => e.task_type !== 'РК');
   const sessionState = getSessionState(currentSession);
   if (sessionState === 'open' || sessionState === 'live') {
-    const ghost = makeGhostEntry(sorted);
+    const ghost = makeGhostEntry();
     const ghostPos = 4; // 0-indexed = 5th position
     if (restEntries.length >= ghostPos) {
       restEntries.splice(ghostPos, 0, ghost);
